@@ -1,4 +1,4 @@
--- | This module exports functions that abstract common TCP 'NS.Socket'
+-- | This module exports functions that abstract simple TCP 'NS.Socket'
 -- usage patterns.
 
 -- Some code in this file was adapted from the @pipes-network@ library by

@@ -1,7 +1,7 @@
 name:                network-simple
 version:             0.1.0.0
-synopsis:            Abstract common network sockets usage patterns.
-description:         Abstract common network sockets usage patterns.
+synopsis:            Abstract simple network sockets usage patterns.
+description:         Abstract simple network sockets usage patterns.
 homepage:            https://github.com/k0001/network-simple
 license:             BSD3
 license-file:        LICENSE
