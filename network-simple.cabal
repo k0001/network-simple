@@ -1,0 +1,25 @@
+name:                network-simple
+version:             0.1.0.0
+synopsis:            Abstract common network sockets usage patterns.
+description:         Abstract common network sockets usage patterns.
+homepage:            https://github.com/k0001/network-simple
+license:             BSD3
+license-file:        LICENSE
+author:              Renzo Carbonara
+maintainer:          renzocarbonaraaλgmail.com
+copyright:           Copyright (c) Renzo Carbonara 2013
+category:            Network
+build-type:          Simple
+cabal-version:       >=1.8
+extra-source-files:  README.md AUTHORS
+
+source-repository head
+    type: git
+    location: git://github.com/k0001/network-simple.git
+
+library
+  hs-source-dirs:    src
+  exposed-modules:   Network.Socket.Simple.TCP
+  other-modules:     Network.Socket.Simple.Internal
+  build-depends:     base ==4.5.*
+                   , network >=2.3
