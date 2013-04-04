@@ -4,6 +4,11 @@
 -- Some code in this file was adapted from the @pipes-network@ library by
 -- Renzo Carbonara. Copyright (c) 2012-2013. See its licensing terms (BSD3) at:
 --   https://github.com/k0001/pipes-network/blob/master/LICENSE
+--
+-- Some code in this file was adapted from the @network-conduit@ library by
+-- Michael Snoyman. Copyright (c) 2011. See its licensing terms (BSD3) at:
+--   https://github.com/snoyberg/conduit/blob/master/network-conduit/LICENSE
+
 
 module Network.Socket.Simple.TCP (
   -- * Server side
