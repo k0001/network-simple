@@ -1,6 +1,7 @@
 # network-simple
 
-Haskell library abstracring over common network sockets usage patterns.
+Haskell library abstracring over simple network sockets usage patterns.
+Currently, only TCP sockets are supported.
 
 Check the source or rendered Haddocks for extensive documentation.
 
