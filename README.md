@@ -1,7 +1,8 @@
 # network-simple
 
 Haskell library abstracring over simple network sockets usage patterns.
-Currently, only TCP sockets are supported.
+Currently, only TCP sockets are supported. Support for UDP and Unix
+sockets is planned for future versions.
 
 Check the source or rendered Haddocks for extensive documentation.
 
