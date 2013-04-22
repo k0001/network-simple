@@ -11,6 +11,9 @@
 
 
 module Network.Simple.TCP (
+  -- * Introduction to TCP networking
+  -- $tcp-101
+
   -- * Server side
   -- $server-side
   serve,
@@ -39,6 +42,36 @@ import           Control.Monad
 import           Data.List                      (partition)
 import qualified Network.Socket                 as NS
 import           Network.Simple.Internal
+
+--------------------------------------------------------------------------------
+-- $tcp-101
+--
+-- This introduction aims to give you a overly simplified overview of some
+-- concepts you need to know about TCP sockets in order to make effective use of
+-- this module.
+--
+-- There's two ends in a single TCP connection: one is the TCP «server» and the
+-- other is the TCP «client». Each end is uniquely identified by an IP address
+-- and a TCP port pair, and each end knows the IP address and TCP port of the
+-- other end. Each end can send and receive data to and from the other end.
+--
+-- A TCP server, once «bound» to a well-known IP address and TCP port, starts
+-- «listening» for incoming connections from TCP clients to such bound IP
+-- address and TCP port. When a TCP client attempts to connect to the TCP
+-- server, the TCP server must «accept» the incoming connection in order to
+-- start exchanging data with the remote end. A single TCP server can
+-- sequentially accept many incoming connections, possibly handling each one
+-- concurrently.
+--
+-- A TCP client can «connect» to a well-known IP address and TCP port previously
+-- bound by a listening TCP server willing to accept new incoming connections.
+-- Once the connection is established, the TCP client can immediately start
+-- exchanging data with the TCP server. The TCP client is randomly assigned a
+-- TCP port when connecting, and its IP address is selected by the operating
+-- system so that it is reachable from the remote end.
+--
+-- The TCP client a and the TCP server can be running in the same host or in
+-- different hosts.
 
 --------------------------------------------------------------------------------
 
@@ -76,7 +109,7 @@ connect host port = E.bracket (connectSock host port) (NS.sClose . fst)
 -- the server side of a TCP connection.
 --
 -- Here's how you could run a TCP server that handles in different threads each
--- incoming connection to port @8000@ at address @127.0.0.1@:
+-- incoming connection to port @8000@ at IPv4 address @127.0.0.1@:
 --
 -- > listen (Host "127.0.0.1") "8000" $ \(listeningSocket, listeningAddr) -> do
 -- >   putStrLn $ "Listening for incoming connections at " ++ show listeningAddr
@@ -120,7 +153,8 @@ listen hp port = E.bracket listen' (NS.sClose . fst)
 -- Both the listening and connection sockets are closed when done or in case of
 -- exceptions.
 --
--- Note: You don't need to use 'listen' nor 'accept' if you use this function.
+-- Note: You don't need to use 'listen' nor 'accept' manually if you use this
+-- function.
 serve
   :: HostPreference   -- ^Preferred host to bind.
   -> NS.ServiceName   -- ^Service port to bind.
@@ -139,8 +173,8 @@ serve hp port k = do
 -- The listening and connection sockets are closed when done or in case of
 -- exceptions.
 --
--- Note: You don't need to use 'listen' nor 'acceptFork' if you use this
--- function.
+-- Note: You don't need to use 'listen' nor 'acceptFork' manually if you use
+-- this function.
 serveFork
   :: HostPreference   -- ^Preferred host to bind.
   -> NS.ServiceName   -- ^Service port to bind.
@@ -251,6 +285,6 @@ isIPv4addr x = NS.addrFamily x == NS.AF_INET
 isIPv6addr x = NS.addrFamily x == NS.AF_INET6
 
 -- | Move the elements that match the predicate closer to the head of the list.
--- Preserve relative order.
+-- Sorting is stable.
 prioritize :: (a -> Bool) -> [a] -> [a]
 prioritize p = uncurry (++) . partition p
