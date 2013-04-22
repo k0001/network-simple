@@ -1,13 +1,13 @@
 name:                network-simple
-version:             0.1.0.0
-synopsis:            Abstract simple network sockets usage patterns.
-description:         Abstract simple network sockets usage patterns.
+version:             0.1.0.1
+synopsis:            Simple network sockets usage patterns.
+description:         Simple network sockets usage patterns.
 homepage:            https://github.com/k0001/network-simple
 bug-reports:         https://github.com/k0001/network-simple/issues
 license:             BSD3
 license-file:        LICENSE
 author:              Renzo Carbonara
-maintainer:          renzocarbonaraaλgmail.com
+maintainer:          renzocarbonaraλgmail.com
 copyright:           Copyright (c) Renzo Carbonara 2013
 category:            Network
 build-type:          Simple
