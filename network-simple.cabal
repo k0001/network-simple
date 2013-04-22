@@ -11,7 +11,7 @@ copyright:           Copyright (c) Renzo Carbonara 2013
 category:            Network
 build-type:          Simple
 cabal-version:       >=1.8
-extra-source-files:  README.md AUTHORS
+extra-source-files:  README.md PEOPLE
 
 source-repository head
     type: git
