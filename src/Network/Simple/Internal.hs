@@ -5,7 +5,7 @@
 -- Michael Snoyman. Copyright (c) 2011. See its licensing terms (BSD3) at:
 --   https://github.com/snoyberg/conduit/blob/master/network-conduit/LICENSE
 
-module Network.Socket.Simple.Internal
+module Network.Simple.Internal
   ( HostPreference(..)
   , hpHostName
   ) where

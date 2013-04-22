@@ -19,7 +19,7 @@ source-repository head
 
 library
   hs-source-dirs:    src
-  exposed-modules:   Network.Socket.Simple.TCP
-  other-modules:     Network.Socket.Simple.Internal
+  exposed-modules:   Network.Simple.TCP
+  other-modules:     Network.Simple.Internal
   build-depends:     base (>=4.5 && < 5)
                    , network (>=2.3 && <2.5)

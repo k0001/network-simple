@@ -10,7 +10,7 @@
 --   https://github.com/snoyberg/conduit/blob/master/network-conduit/LICENSE
 
 
-module Network.Socket.Simple.TCP (
+module Network.Simple.TCP (
   -- * Server side
   -- $server-side
   serve,
@@ -38,7 +38,7 @@ import qualified Control.Exception              as E
 import           Control.Monad
 import           Data.List                      (partition)
 import qualified Network.Socket                 as NS
-import           Network.Socket.Simple.Internal
+import           Network.Simple.Internal
 
 --------------------------------------------------------------------------------
 
