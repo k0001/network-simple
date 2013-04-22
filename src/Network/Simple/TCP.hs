@@ -99,7 +99,8 @@ connect host port = E.bracket (connectSock host port) (NS.sClose . fst)
 --
 -- Note: 'N.maxListenQueue' is tipically 128, which is too small for high
 -- performance servers. So, we use the maximum between 'N.maxListenQueue' and
--- 2048 as the default size of the listening queue.
+-- 2048 as the default size of the listening queue. The 'NS.NoDelay' and
+-- 'NS.ReuseAddr' options are set on the socket.
 listen
   :: HostPreference   -- ^Preferred host to bind.
   -> NS.ServiceName   -- ^Service port to bind.
