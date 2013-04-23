@@ -50,7 +50,7 @@ import           Network.Simple.Internal
 -- concepts you need to know about TCP sockets in order to make effective use of
 -- this module.
 --
--- There's two ends in a single TCP connection: one is the TCP «server» and the
+-- There are two ends in a single TCP connection: one is the TCP «server» and the
 -- other is the TCP «client». Each end is uniquely identified by an IP address
 -- and a TCP port pair, and each end knows the IP address and TCP port of the
 -- other end. Each end can send and receive data to and from the other end.
