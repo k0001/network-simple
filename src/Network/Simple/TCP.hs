@@ -212,9 +212,9 @@ acceptFork
                       -- once an incoming connection is accepted. Takes the
                       -- connection socket and remote end address.
   -> IO ThreadId
-acceptFork lsock f = do
-    client@(csock,_) <- NS.accept lsock
-    forkIO $ E.finally (f client) (NS.sClose csock)
+acceptFork lsock k = do
+    conn@(csock,_) <- NS.accept lsock
+    forkIO $ E.finally (k conn) (NS.sClose csock)
 {-# INLINABLE acceptFork #-}
 
 --------------------------------------------------------------------------------
