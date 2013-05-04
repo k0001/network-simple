@@ -9,30 +9,29 @@
 -- Michael Snoyman. Copyright (c) 2011. See its licensing terms (BSD3) at:
 --   https://github.com/snoyberg/conduit/blob/master/network-conduit/LICENSE
 
-
 module Network.Simple.TCP (
   -- * Introduction to TCP networking
   -- $tcp-101
 
-  -- * Server side
-  -- $server-side
-  serve,
-  -- ** Listening
-  listen,
-  -- ** Accepting
-  accept,
-  acceptFork,
-
   -- * Client side
   -- $client-side
-  connect,
+    connect
+
+  -- * Server side
+  -- $server-side
+  , serve
+  -- ** Listening
+  , listen
+  -- ** Accepting
+  , accept
+  , acceptFork
 
   -- * Low level support
-  bindSock,
-  connectSock,
+  , bindSock
+  , connectSock
 
   -- * Exports
-  HostPreference(..),
+  , HostPreference(..)
   ) where
 
 import           Control.Concurrent             (ThreadId, forkIO)
@@ -49,10 +48,11 @@ import           Network.Simple.Internal
 -- concepts you need to know about TCP sockets in order to make effective use of
 -- this module.
 --
--- There are two ends in a single TCP connection: one is the TCP «server» and the
--- other is the TCP «client». Each end is uniquely identified by an IP address
--- and a TCP port pair, and each end knows the IP address and TCP port of the
--- other end. Each end can send and receive data to and from the other end.
+-- There are two ends in a single TCP connection: one is the TCP «server» and
+-- the other is the TCP «client». Each end is uniquely identified by an IP
+-- address and a TCP port pair, and each end knows the IP address and TCP port
+-- of the other end. Each end can send and receive data to and from the other
+-- end.
 --
 -- A TCP server, once «bound» to a well-known IP address and TCP port, starts
 -- «listening» for incoming connections from TCP clients to such bound IP
@@ -117,6 +117,29 @@ connect host port = E.bracket (connectSock host port) (NS.sClose . fst)
 -- If you need to control the way your server runs, then you can use more
 -- advanced functions such as 'listen', 'accept' and 'acceptFork'.
 
+--------------------------------------------------------------------------------
+
+-- | Start a TCP server that accepts incoming connections and handles them
+-- concurrently in different threads.
+--
+-- The listening and connection sockets are closed when done or in case of
+-- exceptions.
+--
+-- Note: You don't need to use 'listen' nor 'acceptFork' manually if you use
+-- this function.
+serve
+  :: HostPreference   -- ^Preferred host to bind.
+  -> NS.ServiceName   -- ^Service port to bind.
+  -> ((NS.Socket, NS.SockAddr) -> IO ())
+                      -- ^Computation to run in a different thread
+                      -- once an incoming connection is accepted. Takes the
+                      -- connection socket and remote end address.
+  -> IO ()
+serve hp port k = do
+    listen hp port $ \(lsock,_) -> do
+      forever $ acceptFork lsock k
+
+--------------------------------------------------------------------------------
 
 -- | Bind a TCP listening socket and use it.
 --
@@ -143,25 +166,7 @@ listen hp port = E.bracket listen' (NS.sClose . fst)
                  NS.listen bsock $ max 2048 NS.maxListenQueue
                  return x
 
--- | Start a TCP server that accepts incoming connections and handles them
--- concurrently in different threads.
---
--- The listening and connection sockets are closed when done or in case of
--- exceptions.
---
--- Note: You don't need to use 'listen' nor 'acceptFork' manually if you use
--- this function.
-serve
-  :: HostPreference   -- ^Preferred host to bind.
-  -> NS.ServiceName   -- ^Service port to bind.
-  -> ((NS.Socket, NS.SockAddr) -> IO ())
-                      -- ^Computation to run in a different thread
-                      -- once an incoming connection is accepted. Takes the
-                      -- connection socket and remote end address.
-  -> IO ()
-serve hp port k = do
-    listen hp port $ \(lsock,_) -> do
-      forever $ acceptFork lsock k
+--------------------------------------------------------------------------------
 
 -- | Accept a single incoming connection and use it.
 --
