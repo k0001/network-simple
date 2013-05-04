@@ -1,4 +1,4 @@
-# Version HEAD
+# Version 0.2.0.0
 
 * `Network.Simple.TCP.serveFork` was renamed to `serve`, and the previous
   function named `serve` was removed.
