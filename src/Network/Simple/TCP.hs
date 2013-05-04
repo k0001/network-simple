@@ -76,9 +76,6 @@ import           Network.Simple.Internal
 
 -- $client-side
 --
--- The following functions allow you to obtain and use 'NS.Socket's useful to
--- the client side of a TCP connection.
---
 -- Here's how you could run a TCP client:
 --
 -- > connect "www.example.org" "80" $ \(connectionSocket, remoteAddr) -> do
@@ -104,17 +101,14 @@ connect host port = E.bracket (connectSock host port) (NS.sClose . fst)
 
 -- $server-side
 --
--- The following functions allow you to obtain and use 'NS.Socket's useful to
--- the server side of a TCP connection.
---
 -- Here's how you can run a TCP server that handles in different threads each
 -- incoming connection to port @8000@ at IPv4 address @127.0.0.1@:
 --
--- > serve (Host "127.0.0.1") "8000" $ \(connSocket, remoteAddr) -> do
+-- > serve (Host "127.0.0.1") "8000" $ \(connectionSocket, remoteAddr) -> do
 -- >   putStrLn $ "TCP connection established from " ++ show remoteAddr
--- >   -- now you may use connSocket as you please within this scope.
+-- >   -- now you may use connectionSocket as you please within this scope.
 --
--- If you need to control the way your server runs, then you can use more
+-- If you need more control on the way your server runs, then you can use more
 -- advanced functions such as 'listen', 'accept' and 'acceptFork'.
 
 --------------------------------------------------------------------------------
@@ -122,11 +116,11 @@ connect host port = E.bracket (connectSock host port) (NS.sClose . fst)
 -- | Start a TCP server that accepts incoming connections and handles them
 -- concurrently in different threads.
 --
--- The listening and connection sockets are closed when done or in case of
--- exceptions.
+-- Any acquired network resources are properly closed and discarded when done or
+-- in case of exceptions.
 --
--- Note: You don't need to use 'listen' nor 'acceptFork' manually if you use
--- this function.
+-- Note: This function performs 'listen' and 'acceptFork', so you don't need to
+-- perform those manually.
 serve
   :: HostPreference   -- ^Preferred host to bind.
   -> NS.ServiceName   -- ^Service port to bind.
