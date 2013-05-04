@@ -1,7 +1,11 @@
+# Version HEAD
+
+* `Network.Simple.TCP.serveFork` was renamed to `serve`, and the previous
+  function named `serve` was removed.
+
 # Version 0.1.0.1
 
 * Fixed typos, including the maintainer email.
-
 
 # Version 0.1.0.0
 

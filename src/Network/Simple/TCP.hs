@@ -17,7 +17,6 @@ module Network.Simple.TCP (
   -- * Server side
   -- $server-side
   serve,
-  serveFork,
   -- ** Listening
   listen,
   -- ** Accepting
@@ -147,27 +146,7 @@ listen hp port = E.bracket listen' (NS.sClose . fst)
                  NS.listen bsock $ max 2048 NS.maxListenQueue
                  return x
 
--- | Start a TCP server that sequentially accepts and uses each incoming
--- connection.
---
--- Both the listening and connection sockets are closed when done or in case of
--- exceptions.
---
--- Note: You don't need to use 'listen' nor 'accept' manually if you use this
--- function.
-serve
-  :: HostPreference   -- ^Preferred host to bind.
-  -> NS.ServiceName   -- ^Service port to bind.
-  -> ((NS.Socket, NS.SockAddr) -> IO r)
-                      -- ^Computation to run once an incoming
-                      -- connection is accepted. Takes the connection socket
-                      -- and remote end address.
-  -> IO r
-serve hp port k = do
-    listen hp port $ \(lsock,_) -> do
-      forever $ accept lsock k
-
--- | Start a TCP server that accepts incoming connections and uses them
+-- | Start a TCP server that accepts incoming connections and handles them
 -- concurrently in different threads.
 --
 -- The listening and connection sockets are closed when done or in case of
@@ -175,7 +154,7 @@ serve hp port k = do
 --
 -- Note: You don't need to use 'listen' nor 'acceptFork' manually if you use
 -- this function.
-serveFork
+serve
   :: HostPreference   -- ^Preferred host to bind.
   -> NS.ServiceName   -- ^Service port to bind.
   -> ((NS.Socket, NS.SockAddr) -> IO ())
@@ -183,7 +162,7 @@ serveFork
                       -- once an incoming connection is accepted. Takes the
                       -- connection socket and remote end address.
   -> IO ()
-serveFork hp port k = do
+serve hp port k = do
     listen hp port $ \(lsock,_) -> do
       forever $ acceptFork lsock k
 
