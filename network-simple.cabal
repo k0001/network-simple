@@ -55,6 +55,7 @@ executable network-simple-example-chat-tcp
   if !flag(examples)
     buildable: False
   hs-source-dirs:      examples
-  main-is:             echo-tcp.hs
-  build-depends:       base, bytestring, network-simple, network
+  main-is:             chat-tcp.hs
+  build-depends:       base, bytestring, network-simple, network, text,
+                       stm
 
