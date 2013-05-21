@@ -189,7 +189,7 @@ acceptFork
   -> IO ThreadId
 acceptFork lsock k = do
     conn@(csock,_) <- NS.accept lsock
-    forkIO $ E.finally (k conn) (NS.sClose csock)
+    forkFinally (k conn) (\_ -> NS.sClose csock)
 {-# INLINABLE acceptFork #-}
 
 --------------------------------------------------------------------------------
@@ -263,3 +263,15 @@ isIPv6addr x = NS.addrFamily x == NS.AF_INET6
 -- Sorting is stable.
 prioritize :: (a -> Bool) -> [a] -> [a]
 prioritize p = uncurry (++) . partition p
+
+
+--------------------------------------------------------------------------------
+
+-- | 'Control.Concurrent.forkFinally' was introduced in base==4.6.0.0. We'll use
+-- our own version here for a while, until base==4.6.0.0 is widely establised.
+forkFinally :: IO a -> (Either E.SomeException a -> IO ()) -> IO ThreadId
+forkFinally action and_then =
+    E.mask $ \restore ->
+        forkIO $ E.try (restore action) >>= and_then
+
+
