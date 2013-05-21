@@ -1,11 +1,19 @@
+# Version HEAD
+
+* FIX: `acceptFork` now properly closes the connection socket, even in
+  case of asynchronous exceptions.
+
+
 # Version 0.2.0.0
 
 * `Network.Simple.TCP.serveFork` was renamed to `serve`, and the previous
   function named `serve` was removed.
 
+
 # Version 0.1.0.1
 
 * Fixed typos, including the maintainer email.
+
 
 # Version 0.1.0.0
 
