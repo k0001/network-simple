@@ -189,7 +189,9 @@ acceptFork
   -> IO ThreadId
 acceptFork lsock k = do
     conn@(csock,_) <- NS.accept lsock
-    forkFinally (k conn) (\_ -> NS.sClose csock)
+    forkFinally (k conn)
+                (\ea -> do NS.sClose csock
+                           either E.throwIO return ea)
 {-# INLINABLE acceptFork #-}
 
 --------------------------------------------------------------------------------
