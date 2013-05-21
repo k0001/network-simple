@@ -1,4 +1,4 @@
-# Version HEAD
+# Version 0.2.0.1
 
 * FIX: `acceptFork` now properly closes the connection socket, even in
   case of asynchronous exceptions.
