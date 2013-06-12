@@ -1,4 +1,4 @@
-# Version HEAD
+# Version 0.2.1.0
 
 * Export `send` and `recv` from `Network.Simple.TCP`.
 
