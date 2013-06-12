@@ -16,13 +16,13 @@ import           Data.Char                    (isSpace)
 import           Data.Monoid                  ((<>))
 import qualified Data.Text                    as T
 import           Data.Text.Encoding           (decodeUtf8, encodeUtf8)
-import           Network.Simple.TCP           (listen, acceptFork)
+import           Network.Simple.TCP           (listen, acceptFork, withSocketsDo)
 import           Network.Socket               (Socket, SockAddr)
 import           Network.Socket.ByteString    (recv, sendAll)
 
 
 main :: IO ()
-main = do
+main = withSocketsDo $ do
    bchan <- newTChanIO :: IO (TChan T.Text)
             -- ^XXX we should really use 'newBroadcastTCHanIO' from STM-2.4
    listen "*" "9000" $ \(lsock, laddr) -> do

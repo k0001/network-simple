@@ -14,7 +14,7 @@ import           Network.Socket.ByteString (recv, sendAll)
 
 
 main :: IO ()
-main = do
+main = T.withSocketsDo $ do
     T.listen "*" "9000" $ \(lsock, laddr) -> do
       putStrLn $ "Listening for TCP connections at " ++ show laddr
       forever . T.acceptFork lsock $ \(csock, caddr) -> do
