@@ -34,16 +34,22 @@ module Network.Simple.TCP (
   -- $windows-users
   , NS.withSocketsDo
 
-  -- * Exports
+  -- * Utils
+  , recv
+  , send
+
+  -- * Types
   , HostPreference(..)
   ) where
 
 import           Control.Concurrent             (ThreadId, forkIO)
 import qualified Control.Exception              as E
 import           Control.Monad
+import qualified Data.ByteString                as BS
 import           Data.List                      (partition)
 import qualified Network.Socket                 as NS
 import           Network.Simple.Internal
+import qualified Network.Socket.ByteString
 
 --------------------------------------------------------------------------------
 -- $tcp-101
@@ -275,6 +281,26 @@ bindSock hp port = do
       NS.setSocketOption sock NS.ReuseAddr 1
       NS.bindSocket sock sockAddr
       return (sock, sockAddr)
+
+--------------------------------------------------------------------------------
+-- Utils
+
+-- | Read up to a limited number of bytes from a socket.
+--
+-- Returns `Nothing` if the remote end closed the connection or end-of-input was
+-- reached.
+recv :: NS.Socket -> Int -> IO (Maybe BS.ByteString)
+recv sock nbytes = do
+     bs <- Network.Socket.ByteString.recv sock nbytes
+     if BS.null bs
+        then return Nothing
+        else return (Just bs)
+{-# INLINE recv #-}
+
+-- | Writes the given bytes to the socket.
+send :: NS.Socket -> BS.ByteString -> IO ()
+send = Network.Socket.ByteString.sendAll
+{-# INLINE send #-}
 
 --------------------------------------------------------------------------------
 
