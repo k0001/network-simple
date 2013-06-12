@@ -26,6 +26,10 @@ module Network.Simple.TCP (
   , accept
   , acceptFork
 
+  -- * Utils
+  , recv
+  , send
+
   -- * Low level support
   , bindSock
   , connectSock
@@ -33,10 +37,6 @@ module Network.Simple.TCP (
   -- * Note to Windows users
   -- $windows-users
   , NS.withSocketsDo
-
-  -- * Utils
-  , recv
-  , send
 
   -- * Types
   , HostPreference(..)
@@ -90,20 +90,24 @@ import qualified Network.Socket.ByteString
 -- once, right at the beginning of your program. That is, change your program's
 -- 'main' function from:
 --
--- > main = do
--- >   print "Hello world"
--- >   -- rest of the program...
+-- @
+-- main = do
+--   print \"Hello world\"
+--   -- rest of the program...
+-- @
 --
 -- To:
 --
--- > main = withSocketsDo $ do
--- >   print "Hello world"
--- >   -- rest of the program...
+-- @
+-- main = 'NS.withSocketsDo' $ do
+--   print \"Hello world\"
+--   -- rest of the program...
+-- @
 --
 -- If you don't do this, your networking code won't work and you will get many
 -- unexpected errors at runtime. If you use an operating system other than
 -- Windows then you don't need to do this, but it is harmless to do it, so it's
--- recommended that you do, for portability reasons.
+-- recommended that you do for portability reasons.
 
 --------------------------------------------------------------------------------
 
@@ -112,9 +116,12 @@ import qualified Network.Socket.ByteString
 --
 -- Here's how you could run a TCP client:
 --
--- > connect "www.example.org" "80" $ \(connectionSocket, remoteAddr) -> do
--- >   putStrLn $ "Connection established to " ++ show remoteAddr
--- >   -- now you may use connectionSocket as you please within this scope.
+-- @
+-- 'connect' \"www.example.org\" \"80\" $ \(connectionSocket, remoteAddr) -> do
+--   putStrLn $ \"Connection established to \" ++ show remoteAddr
+--   -- Now you may use connectionSocket as you please within this scope,
+--   -- possibly using 'recv' and 'send' to interact with the remote end.
+-- @
 
 -- | Connect to a TCP server and use the connection.
 --
@@ -138,9 +145,12 @@ connect host port = E.bracket (connectSock host port) (NS.sClose . fst)
 -- Here's how you can run a TCP server that handles in different threads each
 -- incoming connection to port @8000@ at IPv4 address @127.0.0.1@:
 --
--- > serve (Host "127.0.0.1") "8000" $ \(connectionSocket, remoteAddr) -> do
--- >   putStrLn $ "TCP connection established from " ++ show remoteAddr
--- >   -- now you may use connectionSocket as you please within this scope.
+-- @
+-- 'serve' ('Host' \"127.0.0.1\") \"8000\" $ \(connectionSocket, remoteAddr) -> do
+--   putStrLn $ \"TCP connection established from \" ++ show remoteAddr
+--   -- Now you may use connectionSocket as you please within this scope,
+--   -- possibly using 'recv' and 'send' to interact with the remote end.
+-- @
 --
 -- If you need more control on the way your server runs, then you can use more
 -- advanced functions such as 'listen', 'accept' and 'acceptFork'.
@@ -288,7 +298,7 @@ bindSock hp port = do
 -- | Read up to a limited number of bytes from a socket.
 --
 -- Returns `Nothing` if the remote end closed the connection or end-of-input was
--- reached.
+-- reached. The number of returned bytes might be less than the specified limit.
 recv :: NS.Socket -> Int -> IO (Maybe BS.ByteString)
 recv sock nbytes = do
      bs <- Network.Socket.ByteString.recv sock nbytes
