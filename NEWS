@@ -1,6 +1,8 @@
 # Version HEAD
 
-* Re-export withSocketsDo from Network.Simple.TCP.
+* Export `send` and `recv` from `Network.Simple.TCP`.
+
+* Re-export `Network.Socket.withSocketsDo` from `Network.Simple.TCP`.
 
 
 # Version 0.2.0.1
