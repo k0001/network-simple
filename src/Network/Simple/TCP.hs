@@ -44,6 +44,7 @@ module Network.Simple.TCP (
 
 import           Control.Concurrent             (ThreadId, forkIO)
 import qualified Control.Exception              as E
+import qualified Control.Monad.Catch            as C
 import           Control.Monad
 import           Control.Monad.IO.Class         (MonadIO(liftIO))
 import qualified Data.ByteString                as BS
@@ -131,14 +132,15 @@ import qualified Network.Socket.ByteString      as NSB
 -- If you prefer to acquire and close the socket yourself, then use
 -- 'connectSock' and the 'NS.sClose' function from "Network.Socket" instead.
 connect
-  :: MonadIO m
+  :: (MonadIO m, C.MonadCatch m)
   => NS.HostName      -- ^Server hostname.
   -> NS.ServiceName   -- ^Server service port.
-  -> ((NS.Socket, NS.SockAddr) -> IO r)
+  -> ((NS.Socket, NS.SockAddr) -> m r)
                       -- ^Computation taking the communication socket
                       -- and the server address.
   -> m r
-connect host port = liftIO . E.bracket (connectSock host port) (NS.sClose . fst)
+connect host port = C.bracket (connectSock host port)
+                              (liftIO . NS.sClose . fst)
 
 --------------------------------------------------------------------------------
 
@@ -168,7 +170,7 @@ connect host port = liftIO . E.bracket (connectSock host port) (NS.sClose . fst)
 -- Note: This function performs 'listen' and 'acceptFork', so you don't need to
 -- perform those manually.
 serve
-  :: MonadIO m
+  :: (MonadIO m, C.MonadCatch m)
   => HostPreference   -- ^Preferred host to bind.
   -> NS.ServiceName   -- ^Service port to bind.
   -> ((NS.Socket, NS.SockAddr) -> IO ())
@@ -195,17 +197,17 @@ serve hp port k = do
 -- 2048 as the default size of the listening queue. The 'NS.NoDelay' and
 -- 'NS.ReuseAddr' options are set on the socket.
 listen
-  :: MonadIO m
+  :: (MonadIO m, C.MonadCatch m)
   => HostPreference   -- ^Preferred host to bind.
   -> NS.ServiceName   -- ^Service port to bind.
-  -> ((NS.Socket, NS.SockAddr) -> IO r)
+  -> ((NS.Socket, NS.SockAddr) -> m r)
                       -- ^Computation taking the listening socket and
                       -- the address it's bound to.
   -> m r
-listen hp port = liftIO . E.bracket listen' (NS.sClose . fst)
+listen hp port = C.bracket listen' (liftIO . NS.sClose . fst)
   where
     listen' = do x@(bsock,_) <- bindSock hp port
-                 NS.listen bsock $ max 2048 NS.maxListenQueue
+                 liftIO . NS.listen bsock $ max 2048 NS.maxListenQueue
                  return x
 
 --------------------------------------------------------------------------------
@@ -214,16 +216,16 @@ listen hp port = liftIO . E.bracket listen' (NS.sClose . fst)
 --
 -- The connection socket is closed when done or in case of exceptions.
 accept
-  :: MonadIO m
+  :: (MonadIO m, C.MonadCatch m)
   => NS.Socket        -- ^Listening and bound socket.
-  -> ((NS.Socket, NS.SockAddr) -> IO b)
+  -> ((NS.Socket, NS.SockAddr) -> m b)
                       -- ^Computation to run once an incoming
                       -- connection is accepted. Takes the connection socket
                       -- and remote end address.
   -> m b
-accept lsock k = liftIO $ do
-    conn@(csock,_) <- NS.accept lsock
-    E.finally (k conn) (NS.sClose csock)
+accept lsock k = do
+    conn@(csock,_) <- liftIO (NS.accept lsock)
+    C.finally (k conn) (liftIO (NS.sClose csock))
 {-# INLINABLE accept #-}
 
 -- | Accept a single incoming connection and use it in a different thread.
