@@ -35,7 +35,6 @@ module Network.Simple.TCP (
   , connectSock
 
   -- * Note to Windows users
-  -- $windows-users
   , NS.withSocketsDo
 
   -- * Types
@@ -83,34 +82,6 @@ import qualified Network.Socket.ByteString
 -- different hosts.
 
 --------------------------------------------------------------------------------
-
--- $windows-users
---
--- If you are running Windows, then you /must/ call 'NS.withSocketsDo', just
--- once, right at the beginning of your program. That is, change your program's
--- 'main' function from:
---
--- @
--- main = do
---   print \"Hello world\"
---   -- rest of the program...
--- @
---
--- To:
---
--- @
--- main = 'NS.withSocketsDo' $ do
---   print \"Hello world\"
---   -- rest of the program...
--- @
---
--- If you don't do this, your networking code won't work and you will get many
--- unexpected errors at runtime. If you use an operating system other than
--- Windows then you don't need to do this, but it is harmless to do it, so it's
--- recommended that you do for portability reasons.
-
---------------------------------------------------------------------------------
-
 
 -- $client-side
 --
