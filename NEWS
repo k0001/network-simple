@@ -1,3 +1,12 @@
+# Version HEAD
+
+* Re-export `Socket`, `SockAddr`, `HostName` and `ServiceName` from
+  `Network.Socket` at `Network.Simple.TCP`.
+
+* Generalize the `IO` monad by using `MonadIO` and `MonadCatch` (from
+  the `exceptions` library).
+
+
 # Version 0.2.1.0
 
 * Export `send` and `recv` from `Network.Simple.TCP`.
