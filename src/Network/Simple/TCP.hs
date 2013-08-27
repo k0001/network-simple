@@ -39,6 +39,11 @@ module Network.Simple.TCP (
 
   -- * Types
   , HostPreference(..)
+  -- ** Re-exported from @Network.Socket@
+  , NS.HostName
+  , NS.ServiceName
+  , NS.Socket
+  , NS.SockAddr
   ) where
 
 import           Control.Concurrent             (ThreadId, forkIO)
