@@ -45,11 +45,12 @@ module Network.Simple.TCP (
 import           Control.Concurrent             (ThreadId, forkIO)
 import qualified Control.Exception              as E
 import           Control.Monad
+import           Control.Monad.IO.Class         (MonadIO(liftIO))
 import qualified Data.ByteString                as BS
 import           Data.List                      (partition)
 import qualified Network.Socket                 as NS
 import           Network.Simple.Internal
-import qualified Network.Socket.ByteString
+import qualified Network.Socket.ByteString      as NSB
 
 --------------------------------------------------------------------------------
 -- $tcp-101
@@ -299,17 +300,17 @@ bindSock hp port = do
 --
 -- Returns `Nothing` if the remote end closed the connection or end-of-input was
 -- reached. The number of returned bytes might be less than the specified limit.
-recv :: NS.Socket -> Int -> IO (Maybe BS.ByteString)
+recv :: MonadIO m => NS.Socket -> Int -> m (Maybe BS.ByteString)
 recv sock nbytes = do
-     bs <- Network.Socket.ByteString.recv sock nbytes
+     bs <- liftIO (NSB.recv sock nbytes)
      if BS.null bs
         then return Nothing
         else return (Just bs)
 {-# INLINE recv #-}
 
 -- | Writes the given bytes to the socket.
-send :: NS.Socket -> BS.ByteString -> IO ()
-send = Network.Socket.ByteString.sendAll
+send :: MonadIO m => NS.Socket -> BS.ByteString -> m ()
+send sock = \bs -> liftIO (NSB.sendAll sock bs)
 {-# INLINE send #-}
 
 --------------------------------------------------------------------------------
