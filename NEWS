@@ -1,4 +1,4 @@
-# Version HEAD
+# Version 0.3.0
 
 * Re-export `Network.Socket.close` at `Network.Simple.TCP`, except
   called `closeSock`.
