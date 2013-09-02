@@ -154,7 +154,7 @@ connect host port = C.bracket (connectSock host port)
 -- Note: This function performs 'listen' and 'acceptFork', so you don't need to
 -- perform those manually.
 serve
-  :: (MonadIO m, C.MonadCatch m)
+  :: MonadIO m
   => HostPreference   -- ^Preferred host to bind.
   -> NS.ServiceName   -- ^Service port to bind.
   -> ((NS.Socket, NS.SockAddr) -> IO ())
@@ -162,7 +162,7 @@ serve
                       -- once an incoming connection is accepted. Takes the
                       -- connection socket and remote end address.
   -> m ()
-serve hp port k = do
+serve hp port k = liftIO $ do
     listen hp port $ \(lsock,_) -> do
       forever $ acceptFork lsock k
 
