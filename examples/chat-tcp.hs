@@ -11,28 +11,26 @@ import           Control.Concurrent.STM.TChan (TChan, newTChanIO, writeTChan
                                               ,readTChan, dupTChan)
 import           Control.Concurrent           (forkIO, killThread)
 import           Control.Exception            (finally)
-import           Control.Monad                (forever, when)
+import           Control.Monad                (forever, when, liftM)
 import           Data.Char                    (isSpace)
 import           Data.Monoid                  ((<>))
 import qualified Data.Text                    as T
 import           Data.Text.Encoding           (decodeUtf8, encodeUtf8)
-import           Network.Simple.TCP           (listen, acceptFork, withSocketsDo)
-import           Network.Socket               (Socket, SockAddr)
-import           Network.Socket.ByteString    (recv, sendAll)
+import           Network.Simple.TCP           as S
 
 
 main :: IO ()
-main = withSocketsDo $ do
+main = S.withSocketsDo $ do
    bchan <- newTChanIO :: IO (TChan T.Text)
             -- ^XXX we should really use 'newBroadcastTCHanIO' from STM-2.4
-   listen "*" "9000" $ \(lsock, laddr) -> do
+   S.listen "*" "9000" $ \(lsock, laddr) -> do
      putStrLn $ "Listening for TCP connections at " ++ show laddr
-     forever . acceptFork lsock $ \(csock,caddr) -> do
+     forever . S.acceptFork lsock $ \(csock, caddr) -> do
        putStrLn $ "Accepted incoming connection from " ++ show caddr
        let talk s = writeTChan bchan $ T.pack (show caddr) <> " " <> s <> "\r\n"
-           sendText = sendAll csock . encodeUtf8
-           recvText = return . decodeUtf8 =<< recv csock 4096
-                      -- ^XXX we don't handle messages longer than 4096 bytes!
+           sendText = S.send csock . encodeUtf8
+           recvText = fmap decodeUtf8 `liftM` S.recv csock 4096
+              -- ^XXX we don't handle messages longer than 4096 bytes!
        atomically $ talk "joined."
        rochan <- atomically $ dupTChan bchan
        finally (handleClient talk rochan sendText recvText)
@@ -43,7 +41,7 @@ main = withSocketsDo $ do
 handleClient :: (T.Text -> STM ()) -- ^Broadcast a message to all chat users.
              -> TChan T.Text       -- ^Incomming chat messages.
              -> (T.Text -> IO ())  -- ^Send text to the client.
-             -> IO T.Text          -- ^Receive text from the client.
+             -> IO (Maybe T.Text)  -- ^Receive text from the client.
              -> IO ()
 handleClient talk inbox sendText recvText = do
     tid <- forkIO . forever $ atomically (readTChan inbox) >>= sendText
@@ -51,8 +49,8 @@ handleClient talk inbox sendText recvText = do
     killThread tid
   where
     fromClient = do
-      t <- return . T.strip =<< recvText
-      when (not (T.null t)) $ do
-        atomically (talk $ "says: " <> t) >> fromClient
-
-
+      mt <- recvText
+      case fmap T.strip mt of
+        Just t | not (T.null t) ->
+          atomically (talk $ "says: " <> t) >> fromClient
+        _ -> return ()
