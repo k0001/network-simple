@@ -201,11 +201,11 @@ listen hp port = C.bracket listen' (closeSock . fst)
 accept
   :: (MonadIO m, C.MonadCatch m)
   => NS.Socket        -- ^Listening and bound socket.
-  -> ((NS.Socket, NS.SockAddr) -> m b)
+  -> ((NS.Socket, NS.SockAddr) -> m r)
                       -- ^Computation to run once an incoming
                       -- connection is accepted. Takes the connection socket
                       -- and remote end address.
-  -> m b
+  -> m r
 accept lsock k = do
     conn@(csock,_) <- liftIO (NS.accept lsock)
     C.finally (k conn) (closeSock csock)
