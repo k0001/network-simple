@@ -1,5 +1,8 @@
 # Version HEAD
 
+* Re-export `Network.Socket.close` at `Network.Simple.TCP`, except
+  called `closeSock`.
+
 * Re-export `Socket`, `SockAddr`, `HostName` and `ServiceName` from
   `Network.Socket` at `Network.Simple.TCP`.
 
