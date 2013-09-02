@@ -2,6 +2,11 @@
 
 -- | This module exports functions that abstract simple TCP 'NS.Socket'
 -- usage patterns.
+--
+-- This module uses 'MonadIO' and 'C.MonadCatch' extensively so that you can
+-- reuse these functions in monads other than 'IO'. However, if you don't care
+-- about any of that, just pretend you are using the 'IO' monad all the time
+-- and everything will work as expected.
 
 -- Some code in this file was adapted from the @pipes-network@ library by
 -- Renzo Carbonara. Copyright (c) 2012-2013. See its licensing terms (BSD3) at:
@@ -98,7 +103,7 @@ import qualified Network.Socket.ByteString      as NSB
 -- Here's how you could run a TCP client:
 --
 -- @
--- 'connect' \"www.example.org\" \"80\" $ \(connectionSocket, remoteAddr) -> do
+-- 'connect' \"www.example.org\" \"80\" $ \\(connectionSocket, remoteAddr) -> do
 --   putStrLn $ \"Connection established to \" ++ show remoteAddr
 --   -- Now you may use connectionSocket as you please within this scope,
 --   -- possibly using 'recv' and 'send' to interact with the remote end.
@@ -129,7 +134,7 @@ connect host port = C.bracket (connectSock host port)
 -- incoming connection to port @8000@ at IPv4 address @127.0.0.1@:
 --
 -- @
--- 'serve' ('Host' \"127.0.0.1\") \"8000\" $ \(connectionSocket, remoteAddr) -> do
+-- 'serve' ('Host' \"127.0.0.1\") \"8000\" $ \\(connectionSocket, remoteAddr) -> do
 --   putStrLn $ \"TCP connection established from \" ++ show remoteAddr
 --   -- Now you may use connectionSocket as you please within this scope,
 --   -- possibly using 'recv' and 'send' to interact with the remote end.
