@@ -1,5 +1,7 @@
 # network-simple
 
+[![Build Status](https://secure.travis-ci.org/k0001/network-simple.png)](http://travis-ci.org/k0001/network-simple)
+
 Haskell library abstracring over simple network sockets usage patterns.
 Currently, only TCP sockets are supported. Support for UDP and Unix
 sockets is planned for future versions.
