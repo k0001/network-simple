@@ -309,12 +309,12 @@ recv sock nbytes = do
      if BS.null bs
         then return Nothing
         else return (Just bs)
-{-# INLINE recv #-}
+{-# INLINABLE recv #-}
 
 -- | Writes the given bytes to the socket.
 send :: MonadIO m => NS.Socket -> BS.ByteString -> m ()
 send sock = \bs -> liftIO (NSB.sendAll sock bs)
-{-# INLINE send #-}
+{-# INLINABLE send #-}
 
 --------------------------------------------------------------------------------
 
