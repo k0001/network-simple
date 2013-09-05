@@ -124,7 +124,7 @@ connect
                       -- and the server address.
   -> m r
 connect host port = C.bracket (connectSock host port)
-                              (closeSock . fst)
+                              (silentCloseSock . fst)
 
 --------------------------------------------------------------------------------
 
@@ -187,7 +187,7 @@ listen
                       -- ^Computation taking the listening socket and
                       -- the address it's bound to.
   -> m r
-listen hp port = C.bracket listen' (closeSock . fst)
+listen hp port = C.bracket listen' (silentCloseSock . fst)
   where
     listen' = do x@(bsock,_) <- bindSock hp port
                  liftIO . NS.listen bsock $ max 2048 NS.maxListenQueue
@@ -208,7 +208,7 @@ accept
   -> m r
 accept lsock k = do
     conn@(csock,_) <- liftIO (NS.accept lsock)
-    C.finally (k conn) (closeSock csock)
+    C.finally (k conn) (silentCloseSock csock)
 {-# INLINABLE accept #-}
 
 -- | Accept a single incoming connection and use it in a different thread.
@@ -225,7 +225,7 @@ acceptFork
 acceptFork lsock k = liftIO $ do
     conn@(csock,_) <- NS.accept lsock
     forkFinally (k conn)
-                (\ea -> do closeSock csock
+                (\ea -> do silentCloseSock csock
                            either E.throwIO return ea)
 {-# INLINABLE acceptFork #-}
 
@@ -276,7 +276,7 @@ bindSock hp port = liftIO $ do
     tryAddrs []     = error "bindSock: no addresses available"
     tryAddrs [x]    = useAddr x
     tryAddrs (x:xs) = E.catch (useAddr x)
-                              (\e -> let _ = e :: E.IOException in tryAddrs xs)
+                              (\e -> let _ = e :: IOError in tryAddrs xs)
 
     useAddr addr = E.bracketOnError (newSocket addr) closeSock $ \sock -> do
       let sockAddr = NS.addrAddress addr
@@ -344,4 +344,10 @@ forkFinally action and_then =
     E.mask $ \restore ->
         forkIO $ E.try (restore action) >>= and_then
 
+
+-- | Like 'closeSock', except it swallows all 'IOError' exceptions.
+silentCloseSock :: MonadIO m => NS.Socket -> m ()
+silentCloseSock sock = liftIO $ do
+    E.catch (closeSock sock)
+            (\e -> let _ = e :: IOError in return ())
 
