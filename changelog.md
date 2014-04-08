@@ -1,3 +1,8 @@
+# Version 0.3.1
+
+* Bumped upper-bounds on `exceptions` dependency.
+
+
 # Version 0.3.0
 
 * Re-export `Network.Socket.close` at `Network.Simple.TCP`, except

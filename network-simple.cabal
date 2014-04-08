@@ -15,9 +15,10 @@ description:
   This module exports functions that abstract simple network socket
   usage patterns.
   .
-  See the @NEWS@ file in the source distribution to learn about any
+  See the @changelog.md@ file in the source distribution to learn about any
   important changes between version.
 extra-source-files:
+  changelog.md
   README.md
   PEOPLE
   examples/echo-tcp.hs
