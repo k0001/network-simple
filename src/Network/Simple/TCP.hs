@@ -116,7 +116,7 @@ import qualified Network.Socket.ByteString      as NSB
 -- If you prefer to acquire and close the socket yourself, then use
 -- 'connectSock' and 'closeSock'.
 connect
-  :: (MonadIO m, C.MonadCatch m)
+  :: (MonadIO m, C.MonadMask m)
   => NS.HostName      -- ^Server hostname.
   -> NS.ServiceName   -- ^Server service port.
   -> ((NS.Socket, NS.SockAddr) -> m r)
@@ -180,7 +180,7 @@ serve hp port k = liftIO $ do
 -- 2048 as the default size of the listening queue. The 'NS.NoDelay' and
 -- 'NS.ReuseAddr' options are set on the socket.
 listen
-  :: (MonadIO m, C.MonadCatch m)
+  :: (MonadIO m, C.MonadMask m)
   => HostPreference   -- ^Preferred host to bind.
   -> NS.ServiceName   -- ^Service port to bind.
   -> ((NS.Socket, NS.SockAddr) -> m r)
@@ -199,7 +199,7 @@ listen hp port = C.bracket listen' (silentCloseSock . fst)
 --
 -- The connection socket is closed when done or in case of exceptions.
 accept
-  :: (MonadIO m, C.MonadCatch m)
+  :: (MonadIO m, C.MonadMask m)
   => NS.Socket        -- ^Listening and bound socket.
   -> ((NS.Socket, NS.SockAddr) -> m r)
                       -- ^Computation to run once an incoming
