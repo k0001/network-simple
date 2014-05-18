@@ -1,3 +1,13 @@
+# Version 0.4
+
+* Bump lower and upper bounds `exceptions` dependency. Replacing some
+  uses of `MonadCatch` with `MonadMask.
+
+* Bump upper bound on `network` dependency.
+
+* Bump upper bound on `transformers` dependency.
+
+
 # Version 0.3.1
 
 * Bumped upper-bounds on `exceptions` dependency.
