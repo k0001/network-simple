@@ -3,7 +3,7 @@
 -- | This module exports functions that abstract simple TCP 'NS.Socket'
 -- usage patterns.
 --
--- This module uses 'MonadIO' and 'C.MonadCatch' extensively so that you can
+-- This module uses 'MonadIO' and 'C.MonadMask' extensively so that you can
 -- reuse these functions in monads other than 'IO'. However, if you don't care
 -- about any of that, just pretend you are using the 'IO' monad all the time
 -- and everything will work as expected.
