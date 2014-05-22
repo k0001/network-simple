@@ -36,6 +36,7 @@ module Network.Simple.TCP (
   -- * Utils
   , recv
   , send
+  , sendMany
 
   -- * Low level support
   , bindSock
