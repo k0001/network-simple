@@ -316,6 +316,11 @@ send :: MonadIO m => NS.Socket -> BS.ByteString -> m ()
 send sock = \bs -> liftIO (NSB.sendAll sock bs)
 {-# INLINABLE send #-}
 
+-- | Writes the given list of `ByteString`s to the socket using vectored IO.
+sendMany :: MonadIO m => NS.Socket -> [BS.ByteString] -> m ()
+sendMany sock = \bs -> liftIO (NSB.sendMany sock bs)
+{-# INLINABLE sendMany #-}
+
 --------------------------------------------------------------------------------
 
 -- Misc
