@@ -36,6 +36,8 @@ module Network.Simple.TCP (
   -- * Utils
   , recv
   , send
+  , sendLazy
+  , sendMany
 
   -- * Low level support
   , bindSock
@@ -60,10 +62,12 @@ import qualified Control.Monad.Catch            as C
 import           Control.Monad
 import           Control.Monad.IO.Class         (MonadIO(liftIO))
 import qualified Data.ByteString                as BS
+import qualified Data.ByteString.Lazy           as BSL
 import           Data.List                      (partition)
 import qualified Network.Socket                 as NS
 import           Network.Simple.Internal
 import qualified Network.Socket.ByteString      as NSB
+import qualified Network.Socket.ByteString.Lazy as NSBL
 
 --------------------------------------------------------------------------------
 -- $tcp-101
@@ -311,10 +315,21 @@ recv sock nbytes = do
         else return (Just bs)
 {-# INLINABLE recv #-}
 
--- | Writes the given bytes to the socket.
+-- | Writes a 'BS.ByteString' to the socket.
 send :: MonadIO m => NS.Socket -> BS.ByteString -> m ()
 send sock = \bs -> liftIO (NSB.sendAll sock bs)
 {-# INLINABLE send #-}
+
+-- | Writes a lazy 'BSL.ByteString' to the socket.
+sendLazy :: MonadIO m => NS.Socket -> BSL.ByteString -> m ()
+sendLazy sock = \bs -> liftIO (NSBL.sendAll sock bs)
+{-# INLINABLE sendLazy #-}
+
+-- | Writes the given list of 'BS.ByteString's to the socket.
+-- This is faster than sending them individually.
+sendMany :: MonadIO m => NS.Socket -> [BS.ByteString] -> m ()
+sendMany sock = \bs -> liftIO (NSB.sendMany sock bs)
+{-# INLINABLE sendMany #-}
 
 --------------------------------------------------------------------------------
 
