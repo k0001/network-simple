@@ -1,3 +1,8 @@
+# Version 0.4.0.1
+
+* Add `sendLazy` and `sendMany` to `Network.Simple.TCP`.
+
+
 # Version 0.4
 
 * Bump lower and upper bounds `exceptions` dependency. Replacing some
