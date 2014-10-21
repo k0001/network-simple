@@ -322,7 +322,12 @@ send sock = \bs -> liftIO (NSB.sendAll sock bs)
 
 -- | Writes a lazy 'BSL.ByteString' to the socket.
 sendLazy :: MonadIO m => NS.Socket -> BSL.ByteString -> m ()
-sendLazy sock = \bs -> liftIO (NSBL.sendAll sock bs)
+#if !MIN_VERSION_network(2,7,0) && defined(mingw32_HOST_OS)
+sendLazy sock = \lbs -> sendMany sock (BSL.toChunks lbs) -- see #13.
+#else
+sendLazy sock = \lbs -> liftIO (NSBL.sendAll sock lbs)
+#endif
+
 {-# INLINABLE sendLazy #-}
 
 -- | Writes the given list of 'BS.ByteString's to the socket.
