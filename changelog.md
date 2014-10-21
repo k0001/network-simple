@@ -1,3 +1,10 @@
+# Version 0.4.0.2
+
+* Workaround `sendLazy` build issues in Windows 8 (see #13).
+
+* Bump upper bound on `network` dependency.
+
+
 # Version 0.4.0.1
 
 * Add `sendLazy` and `sendMany` to `Network.Simple.TCP`.
