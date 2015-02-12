@@ -1,3 +1,8 @@
+# Version 0.4.0.3
+
+* Bump upper bound on `exceptions` dependency.
+
+
 # Version 0.4.0.2
 
 * Workaround `sendLazy` build issues in Windows 8 (see #13).
