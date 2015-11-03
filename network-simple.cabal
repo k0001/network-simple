@@ -16,7 +16,7 @@ description:
   usage patterns.
   .
   See the @changelog.md@ file in the source distribution to learn about any
-  important changes between version.
+  important changes between versions.
 extra-source-files:
   changelog.md
   README.md
