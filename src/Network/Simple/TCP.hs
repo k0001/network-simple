@@ -179,7 +179,7 @@ serve hp port k = liftIO $ do
 -- If you prefer to acquire and close the socket yourself, then use 'bindSock',
 -- 'closeSock' and the 'NS.listen' function from "Network.Socket" instead.
 --
--- Note: 'N.maxListenQueue' is tipically 128, which is too small for high
+-- Note: 'N.maxListenQueue' is typically 128, which is too small for high
 -- performance servers. So, we use the maximum between 'N.maxListenQueue' and
 -- 2048 as the default size of the listening queue. The 'NS.NoDelay' and
 -- 'NS.ReuseAddr' options are set on the socket.
