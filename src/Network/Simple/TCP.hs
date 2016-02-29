@@ -56,18 +56,19 @@ module Network.Simple.TCP (
   , NS.SockAddr
   ) where
 
-import           Control.Concurrent             (ThreadId, forkIO)
-import qualified Control.Exception              as E
-import qualified Control.Monad.Catch            as C
+import           Control.Concurrent (ThreadId)
+import qualified Control.Exception as E
 import           Control.Monad
-import           Control.Monad.IO.Class         (MonadIO(liftIO))
-import qualified Data.ByteString                as BS
-import qualified Data.ByteString.Lazy           as BSL
-import           Data.List                      (partition)
-import qualified Network.Socket                 as NS
+import qualified Control.Monad.Catch as C
+import           Control.Monad.IO.Class (MonadIO(liftIO))
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy as BSL
+import           Data.List (partition)
 import           Network.Simple.Internal
-import qualified Network.Socket.ByteString      as NSB
+import qualified Network.Socket as NS
+import qualified Network.Socket.ByteString as NSB
 import qualified Network.Socket.ByteString.Lazy as NSBL
+import           SlaveThread (forkFinally)
 
 --------------------------------------------------------------------------------
 -- $tcp-101
@@ -156,7 +157,9 @@ connect host port = C.bracket (connectSock host port)
 -- in case of exceptions.
 --
 -- Note: This function performs 'listen' and 'acceptFork', so you don't need to
--- perform those manually.
+-- perform those manually. 'acceptFork' uses 'forkThread' from 'SlaveThread'.
+-- If you start your server with 'forkFinally' or 'fork' from this package it
+-- will close all incoming connections for you on exit.
 serve
   :: MonadIO m
   => HostPreference   -- ^Preferred host to bind.
@@ -228,9 +231,8 @@ acceptFork
   -> m ThreadId
 acceptFork lsock k = liftIO $ do
     conn@(csock,_) <- NS.accept lsock
-    forkFinally (k conn)
-                (\ea -> do silentCloseSock csock
-                           either E.throwIO return ea)
+    forkFinally (silentCloseSock csock) (k conn)
+
 {-# INLINABLE acceptFork #-}
 
 --------------------------------------------------------------------------------
@@ -292,11 +294,13 @@ bindSock hp port = liftIO $ do
 
 -- | Close the 'NS.Socket'.
 closeSock :: MonadIO m => NS.Socket -> m ()
-closeSock = liftIO .
+closeSock soc =
+  liftIO (NS.shutdown soc NS.ShutdownBoth >> close' soc)
+  where
 #if MIN_VERSION_network(2,4,0)
-    NS.close
+    close' = NS.close
 #else
-    NS.sClose
+    close' = NS.sClose
 #endif
 {-# INLINE closeSock #-}
 
@@ -356,14 +360,6 @@ prioritize p = uncurry (++) . partition p
 
 
 --------------------------------------------------------------------------------
-
--- | 'Control.Concurrent.forkFinally' was introduced in base==4.6.0.0. We'll use
--- our own version here for a while, until base==4.6.0.0 is widely establised.
-forkFinally :: IO a -> (Either E.SomeException a -> IO ()) -> IO ThreadId
-forkFinally action and_then =
-    E.mask $ \restore ->
-        forkIO $ E.try (restore action) >>= and_then
-
 
 -- | Like 'closeSock', except it swallows all 'IOError' exceptions.
 silentCloseSock :: MonadIO m => NS.Socket -> m ()
