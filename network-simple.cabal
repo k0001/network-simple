@@ -1,5 +1,5 @@
 name:                network-simple
-version:             0.4.0.3
+version:             0.4.0.4
 homepage:            https://github.com/k0001/network-simple
 bug-reports:         https://github.com/k0001/network-simple/issues
 license:             BSD3
@@ -38,4 +38,5 @@ library
                    , bytestring   (>=0.9.2.1 && <0.11)
                    , transformers (>=0.2 && <0.5)
                    -- Packages not in The Haskell Platform
+                   , slave-thread
                    , exceptions   (>=0.6 && <0.9)
