@@ -1,3 +1,8 @@
+# Version 0.4.0.5
+
+* Bump upper bound on `transformers` dependency.
+
+
 # Version 0.4.0.4
 
 * Bump upper bound on `exceptions` dependency.
