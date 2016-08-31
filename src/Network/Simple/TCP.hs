@@ -211,7 +211,8 @@ accept
                       -- and remote end address.
   -> m r
 accept lsock k = do
-    conn@(csock,_) <- liftIO (NS.accept lsock)
+    (csock,addr) <- liftIO (NS.accept lsock)
+    let conn = (csock, convertIPv6Mapped addr)
     C.finally (k conn) (silentCloseSock csock)
 {-# INLINABLE accept #-}
 
@@ -227,7 +228,8 @@ acceptFork
                       -- connection socket and remote end address.
   -> m ThreadId
 acceptFork lsock k = liftIO $ do
-    conn@(csock,_) <- NS.accept lsock
+    (csock,addr) <- NS.accept lsock
+    let conn = (csock, convertIPv6Mapped addr)
     forkFinally (k conn)
                 (\ea -> do silentCloseSock csock
                            either E.throwIO return ea)
