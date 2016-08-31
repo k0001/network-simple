@@ -8,10 +8,12 @@
 module Network.Simple.Internal
   ( HostPreference(..)
   , hpHostName
+  , convertIPv6Mapped
   ) where
 
 import           Data.String                   (IsString (fromString))
 import qualified Network.Socket as             NS
+import           Data.Word                     (byteSwap32)
 
 -- | Preferred host to bind.
 data HostPreference
@@ -40,4 +42,9 @@ instance IsString HostPreference where
 hpHostName:: HostPreference -> Maybe NS.HostName
 hpHostName (Host s) = Just s
 hpHostName _        = Nothing
+
+-- | Check an IPv6 and convert it to IPv4 if neccessary
+convertIPv6Mapped :: NS.SockAddr -> NS.SockAddr
+convertIPv6Mapped (NS.SockAddrInet6 p _ (0, 0, 0xFFFF, h) _) = NS.SockAddrInet p (byteSwap32 h)
+convertIPv6Mapped sa = sa
 
