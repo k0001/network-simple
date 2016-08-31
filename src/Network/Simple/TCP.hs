@@ -271,6 +271,7 @@ bindSock hp port = liftIO $ do
     let addrs' = case hp of
           HostIPv4 -> prioritize isIPv4addr addrs
           HostIPv6 -> prioritize isIPv6addr addrs
+          HostAny  -> prioritize isIPv6addr addrs
           _        -> addrs
     tryAddrs addrs'
   where
@@ -286,6 +287,11 @@ bindSock hp port = liftIO $ do
       let sockAddr = NS.addrAddress addr
       NS.setSocketOption sock NS.NoDelay 1
       NS.setSocketOption sock NS.ReuseAddr 1
+      when (NS.addrFamily addr == NS.AF_INET6) $
+        if hp == HostAny then
+          NS.setSocketOption sock NS.IPv6Only 0
+        else
+          NS.setSocketOption sock NS.IPv6Only 1
       NS.bindSocket sock sockAddr
       return (sock, sockAddr)
 
