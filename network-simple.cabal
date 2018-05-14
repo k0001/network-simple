@@ -1,12 +1,12 @@
 name:                network-simple
-version:             0.4.0.5
+version:             0.4.1
 homepage:            https://github.com/k0001/network-simple
 bug-reports:         https://github.com/k0001/network-simple/issues
 license:             BSD3
 license-file:        LICENSE
 author:              Renzo Carbonara
-maintainer:          renzocarbonaraλgmail.com
-copyright:           Copyright (c) Renzo Carbonara 2013-2016
+maintainer:          renλren.zone
+copyright:           Copyright (c) Renzo Carbonara 2013-2018
 category:            Network
 build-type:          Simple
 cabal-version:       >=1.8
@@ -34,7 +34,7 @@ library
   exposed-modules:   Network.Simple.TCP
   other-modules:     Network.Simple.Internal
   build-depends:     base         (>=4.7 && < 5)
-                   , network      (>=2.3 && <2.7)
-                   , bytestring   (>=0.9.2.1 && <0.11)
-                   , transformers (>=0.2 && <0.6)
-                   , exceptions   (>=0.6 && <0.9)
+                   , network      (>=2.3)
+                   , bytestring   (>=0.9.2.1)
+                   , transformers (>=0.2)
+                   , exceptions   (>=0.6)
