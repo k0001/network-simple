@@ -1,3 +1,8 @@
+# Version 0.5
+
+* Fix `HostAny` so that IPv6 addresses are correctly included as well.
+
+
 # Version 0.4.0.5
 
 * Bump upper bound on `transformers` dependency.

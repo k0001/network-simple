@@ -8,9 +8,12 @@
 module Network.Simple.Internal
   ( HostPreference(..)
   , hpHostName
+  , ipv4mapped_to_ipv4
   ) where
 
+import           Data.Bits                     (shiftR)
 import           Data.String                   (IsString (fromString))
+import           Data.Word                     (byteSwap32)
 import qualified Network.Socket as             NS
 
 -- | Preferred host to bind.
@@ -40,4 +43,12 @@ instance IsString HostPreference where
 hpHostName:: HostPreference -> Maybe NS.HostName
 hpHostName (Host s) = Just s
 hpHostName _        = Nothing
+
+-- Convert IPv4-Mapped IPv6 Addresses to IPv4.
+ipv4mapped_to_ipv4:: NS.SockAddr -> NS.SockAddr
+ipv4mapped_to_ipv4 (NS.SockAddrInet6 p _ (0, 0, 0xFFFF, h) _)
+  = NS.SockAddrInet p (NS.tupleToHostAddress
+      (fromIntegral (shiftR h 24), fromIntegral (shiftR h 16),
+       fromIntegral (shiftR h  8), fromIntegral h))
+ipv4mapped_to_ipv4 sa = sa
 

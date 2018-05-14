@@ -211,7 +211,8 @@ accept
                       -- and remote end address.
   -> m r
 accept lsock k = do
-    conn@(csock,_) <- liftIO (NS.accept lsock)
+    (csock, addr) <- liftIO (NS.accept lsock)
+    let conn = (csock, ipv4mapped_to_ipv4 addr)
     C.finally (k conn) (silentCloseSock csock)
 {-# INLINABLE accept #-}
 
@@ -227,7 +228,8 @@ acceptFork
                       -- connection socket and remote end address.
   -> m ThreadId
 acceptFork lsock k = liftIO $ do
-    conn@(csock,_) <- NS.accept lsock
+    (csock,addr) <- NS.accept lsock
+    let conn = (csock, ipv4mapped_to_ipv4 addr)
     forkFinally (k conn)
                 (\ea -> do silentCloseSock csock
                            either E.throwIO return ea)
@@ -271,6 +273,7 @@ bindSock hp port = liftIO $ do
     let addrs' = case hp of
           HostIPv4 -> prioritize isIPv4addr addrs
           HostIPv6 -> prioritize isIPv6addr addrs
+          HostAny  -> prioritize isIPv6addr addrs
           _        -> addrs
     tryAddrs addrs'
   where
@@ -286,6 +289,8 @@ bindSock hp port = liftIO $ do
       let sockAddr = NS.addrAddress addr
       NS.setSocketOption sock NS.NoDelay 1
       NS.setSocketOption sock NS.ReuseAddr 1
+      when (isIPv6addr addr) $ do
+         NS.setSocketOption sock NS.IPv6Only (if hp == HostIPv6 then 1 else 0)
       NS.bindSocket sock sockAddr
       return (sock, sockAddr)
 
