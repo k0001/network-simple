@@ -1,8 +1,10 @@
-# Version 0.5
+# Version 0.4.1
 
 * Fix `HostAny` so that IPv6 addresses are correctly included as well. See #22.
 
 * Implement a very crude version of _Happy Eyeballs_ (RFC 8305). See #15.
+
+* Remove upper bounds from all dependencies other than `base`.
 
 
 # Version 0.4.0.5
