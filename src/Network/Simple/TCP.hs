@@ -318,7 +318,9 @@ bindSock hp port = liftIO $ do
 
 -- | Close the 'NS.Socket'.
 closeSock :: MonadIO m => NS.Socket -> m ()
-closeSock s = liftIO (E.finally (NS.shutdown s NS.ShutdownBoth) (NS.close s))
+closeSock s = liftIO $ do
+  E.catch (NS.shutdown s NS.ShutdownBoth) (\(_ :: IOError) -> pure ())
+     `E.finally` (NS.close s)
 {-# INLINABLE closeSock #-}
 
 --------------------------------------------------------------------------------

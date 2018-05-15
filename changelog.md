@@ -1,3 +1,8 @@
+# Version 0.4.2
+
+* Silence errors on socket shutdown.
+
+
 # Version 0.4.1
 
 * Fix `HostAny` so that IPv6 addresses are correctly included as well. See #22.
