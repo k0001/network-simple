@@ -1,4 +1,6 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 -- | This module exports functions that abstract simple TCP 'NS.Socket'
 -- usage patterns.
@@ -56,7 +58,7 @@ module Network.Simple.TCP (
   , NS.SockAddr
   ) where
 
-import           Control.Concurrent             (ThreadId, forkIO)
+import           Control.Concurrent             (ThreadId, forkIO, forkFinally)
 import qualified Control.Exception              as E
 import qualified Control.Monad.Catch            as C
 import           Control.Monad
@@ -246,8 +248,8 @@ acceptFork lsock k = liftIO $ do
 -- Prefer to use 'connect' if you will be using the socket within a limited
 -- scope and would like it to be closed immediately after its usage or in case
 -- of exceptions.
-connectSock :: MonadIO m
-            => NS.HostName -> NS.ServiceName -> m (NS.Socket, NS.SockAddr)
+connectSock
+  :: MonadIO m => NS.HostName -> NS.ServiceName -> m (NS.Socket, NS.SockAddr)
 connectSock host port = liftIO $ do
     (addr:_) <- NS.getAddrInfo (Just hints) (Just host) (Just port)
     E.bracketOnError (newSocket addr) closeSock $ \sock -> do
@@ -255,6 +257,7 @@ connectSock host port = liftIO $ do
        NS.connect sock sockAddr
        return (sock, sockAddr)
   where
+    hints :: NS.AddrInfo
     hints = NS.defaultHints { NS.addrFlags = [NS.AI_ADDRCONFIG]
                             , NS.addrSocketType = NS.Stream }
 
@@ -266,8 +269,8 @@ connectSock host port = liftIO $ do
 -- Prefer to use 'listen' if you will be listening on this socket and using it
 -- within a limited scope, and would like it to be closed immediately after its
 -- usage or in case of exceptions.
-bindSock :: MonadIO m
-         => HostPreference -> NS.ServiceName -> m (NS.Socket, NS.SockAddr)
+bindSock
+  :: MonadIO m => HostPreference -> NS.ServiceName -> m (NS.Socket, NS.SockAddr)
 bindSock hp port = liftIO $ do
     addrs <- NS.getAddrInfo (Just hints) (hpHostName hp) (Just port)
     let addrs' = case hp of
@@ -277,33 +280,29 @@ bindSock hp port = liftIO $ do
           _        -> addrs
     tryAddrs addrs'
   where
-    hints = NS.defaultHints { NS.addrFlags = [NS.AI_PASSIVE]
-                            , NS.addrSocketType = NS.Stream }
-
-    tryAddrs []     = error "bindSock: no addresses available"
-    tryAddrs [x]    = useAddr x
-    tryAddrs (x:xs) = E.catch (useAddr x)
-                              (\e -> let _ = e :: IOError in tryAddrs xs)
-
+    hints :: NS.AddrInfo
+    hints = NS.defaultHints
+      { NS.addrFlags = [NS.AI_PASSIVE]
+      , NS.addrSocketType = NS.Stream }
+    tryAddrs :: [NS.AddrInfo] -> IO (NS.Socket, NS.SockAddr)
+    tryAddrs = \case
+      [] -> error "bindSock: no addresses available"
+      [x] -> useAddr x
+      (x:xs) -> E.catch (useAddr x) (\(e :: IOError) -> tryAddrs xs)
+    useAddr :: NS.AddrInfo -> IO (NS.Socket, NS.SockAddr)
     useAddr addr = E.bracketOnError (newSocket addr) closeSock $ \sock -> do
       let sockAddr = NS.addrAddress addr
       NS.setSocketOption sock NS.NoDelay 1
       NS.setSocketOption sock NS.ReuseAddr 1
       when (isIPv6addr addr) $ do
          NS.setSocketOption sock NS.IPv6Only (if hp == HostIPv6 then 1 else 0)
-      NS.bindSocket sock sockAddr
+      NS.bind sock sockAddr
       return (sock, sockAddr)
-
 
 -- | Close the 'NS.Socket'.
 closeSock :: MonadIO m => NS.Socket -> m ()
-closeSock = liftIO .
-#if MIN_VERSION_network(2,4,0)
-    NS.close
-#else
-    NS.sClose
-#endif
-{-# INLINE closeSock #-}
+closeSock s = liftIO (E.finally (NS.shutdown s NS.ShutdownBoth) (NS.close s))
+{-# INLINABLE closeSock #-}
 
 --------------------------------------------------------------------------------
 -- Utils
@@ -342,7 +341,6 @@ sendMany sock = \bs -> liftIO (NSB.sendMany sock bs)
 {-# INLINABLE sendMany #-}
 
 --------------------------------------------------------------------------------
-
 -- Misc
 
 newSocket :: NS.AddrInfo -> IO NS.Socket
@@ -350,8 +348,10 @@ newSocket addr = NS.socket (NS.addrFamily addr)
                            (NS.addrSocketType addr)
                            (NS.addrProtocol addr)
 
-isIPv4addr, isIPv6addr :: NS.AddrInfo -> Bool
+isIPv4addr :: NS.AddrInfo -> Bool
 isIPv4addr x = NS.addrFamily x == NS.AF_INET
+
+isIPv6addr :: NS.AddrInfo -> Bool
 isIPv6addr x = NS.addrFamily x == NS.AF_INET6
 
 -- | Move the elements that match the predicate closer to the head of the list.
@@ -359,20 +359,10 @@ isIPv6addr x = NS.addrFamily x == NS.AF_INET6
 prioritize :: (a -> Bool) -> [a] -> [a]
 prioritize p = uncurry (++) . partition p
 
-
 --------------------------------------------------------------------------------
-
--- | 'Control.Concurrent.forkFinally' was introduced in base==4.6.0.0. We'll use
--- our own version here for a while, until base==4.6.0.0 is widely establised.
-forkFinally :: IO a -> (Either E.SomeException a -> IO ()) -> IO ThreadId
-forkFinally action and_then =
-    E.mask $ \restore ->
-        forkIO $ E.try (restore action) >>= and_then
-
 
 -- | Like 'closeSock', except it swallows all 'IOError' exceptions.
 silentCloseSock :: MonadIO m => NS.Socket -> m ()
 silentCloseSock sock = liftIO $ do
-    E.catch (closeSock sock)
-            (\e -> let _ = e :: IOError in return ())
+    E.catch (closeSock sock) (\(e :: IOError) -> return ())
 
