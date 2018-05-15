@@ -65,11 +65,15 @@ import           Control.Monad
 import           Control.Monad.IO.Class         (MonadIO(liftIO))
 import qualified Data.ByteString                as BS
 import qualified Data.ByteString.Lazy           as BSL
-import           Data.List                      (partition)
+import           Data.List                      (transpose, partition)
 import qualified Network.Socket                 as NS
-import           Network.Simple.Internal
 import qualified Network.Socket.ByteString      as NSB
 import qualified Network.Socket.ByteString.Lazy as NSBL
+import           System.Timeout                 (timeout)
+
+import Network.Simple.Internal
+  (HostPreference(..), hpHostName, isIPv4addr, isIPv6addr, ipv4mapped_to_ipv4,
+   prioritize, happyEyeballSort)
 
 --------------------------------------------------------------------------------
 -- $tcp-101
@@ -196,7 +200,7 @@ listen
 listen hp port = C.bracket listen' (silentCloseSock . fst)
   where
     listen' = do x@(bsock,_) <- bindSock hp port
-                 liftIO . NS.listen bsock $ max 2048 NS.maxListenQueue
+                 liftIO $ NS.listen bsock $ max 2048 NS.maxListenQueue
                  return x
 
 --------------------------------------------------------------------------------
@@ -251,15 +255,29 @@ acceptFork lsock k = liftIO $ do
 connectSock
   :: MonadIO m => NS.HostName -> NS.ServiceName -> m (NS.Socket, NS.SockAddr)
 connectSock host port = liftIO $ do
-    (addr:_) <- NS.getAddrInfo (Just hints) (Just host) (Just port)
-    E.bracketOnError (newSocket addr) closeSock $ \sock -> do
-       let sockAddr = NS.addrAddress addr
-       NS.connect sock sockAddr
-       return (sock, sockAddr)
+    addrs <- NS.getAddrInfo (Just hints) (Just host) (Just port)
+    tryAddrs (happyEyeballSort addrs)
   where
     hints :: NS.AddrInfo
-    hints = NS.defaultHints { NS.addrFlags = [NS.AI_ADDRCONFIG]
-                            , NS.addrSocketType = NS.Stream }
+    hints = NS.defaultHints
+      { NS.addrFlags = [NS.AI_ADDRCONFIG]
+      , NS.addrSocketType = NS.Stream }
+    tryAddrs :: [NS.AddrInfo] -> IO (NS.Socket, NS.SockAddr)
+    tryAddrs = \case
+      [] -> fail "connectSock: No addresses available"
+      [x] -> useAddr x
+      (x:xs) -> E.catch (useAddr x) (\(_ :: IOError) -> tryAddrs xs)
+    useAddr :: NS.AddrInfo -> IO (NS.Socket, NS.SockAddr)
+    useAddr addr = do
+       yx <- timeout 1000000 $ do -- 1 second
+          E.bracketOnError (newSocket addr) closeSock $ \sock -> do
+             let sockAddr = NS.addrAddress addr
+             NS.connect sock sockAddr
+             pure (sock, sockAddr)
+       case yx of
+          Nothing -> fail "connectSock: Timeout on connect"
+          Just x  -> pure x
+
 
 -- | Obtain a 'NS.Socket' bound to the given host name and TCP service port.
 --
@@ -273,12 +291,11 @@ bindSock
   :: MonadIO m => HostPreference -> NS.ServiceName -> m (NS.Socket, NS.SockAddr)
 bindSock hp port = liftIO $ do
     addrs <- NS.getAddrInfo (Just hints) (hpHostName hp) (Just port)
-    let addrs' = case hp of
-          HostIPv4 -> prioritize isIPv4addr addrs
-          HostIPv6 -> prioritize isIPv6addr addrs
-          HostAny  -> prioritize isIPv6addr addrs
-          _        -> addrs
-    tryAddrs addrs'
+    tryAddrs $ case hp of
+       HostIPv4 -> prioritize isIPv4addr addrs
+       HostIPv6 -> prioritize isIPv6addr addrs
+       HostAny  -> prioritize isIPv6addr addrs
+       _        -> addrs
   where
     hints :: NS.AddrInfo
     hints = NS.defaultHints
@@ -286,9 +303,9 @@ bindSock hp port = liftIO $ do
       , NS.addrSocketType = NS.Stream }
     tryAddrs :: [NS.AddrInfo] -> IO (NS.Socket, NS.SockAddr)
     tryAddrs = \case
-      [] -> error "bindSock: no addresses available"
+      [] -> fail "bindSock: No addresses available"
       [x] -> useAddr x
-      (x:xs) -> E.catch (useAddr x) (\(e :: IOError) -> tryAddrs xs)
+      (x:xs) -> E.catch (useAddr x) (\(_ :: IOError) -> tryAddrs xs)
     useAddr :: NS.AddrInfo -> IO (NS.Socket, NS.SockAddr)
     useAddr addr = E.bracketOnError (newSocket addr) closeSock $ \sock -> do
       let sockAddr = NS.addrAddress addr
@@ -326,13 +343,12 @@ send sock = \bs -> liftIO (NSB.sendAll sock bs)
 
 -- | Writes a lazy 'BSL.ByteString' to the socket.
 sendLazy :: MonadIO m => NS.Socket -> BSL.ByteString -> m ()
+{-# INLINABLE sendLazy #-}
 #if !MIN_VERSION_network(2,7,0) && defined(mingw32_HOST_OS)
 sendLazy sock = \lbs -> sendMany sock (BSL.toChunks lbs) -- see #13.
 #else
 sendLazy sock = \lbs -> liftIO (NSBL.sendAll sock lbs)
 #endif
-
-{-# INLINABLE sendLazy #-}
 
 -- | Writes the given list of 'BS.ByteString's to the socket.
 -- This is faster than sending them individually.
@@ -348,21 +364,7 @@ newSocket addr = NS.socket (NS.addrFamily addr)
                            (NS.addrSocketType addr)
                            (NS.addrProtocol addr)
 
-isIPv4addr :: NS.AddrInfo -> Bool
-isIPv4addr x = NS.addrFamily x == NS.AF_INET
-
-isIPv6addr :: NS.AddrInfo -> Bool
-isIPv6addr x = NS.addrFamily x == NS.AF_INET6
-
--- | Move the elements that match the predicate closer to the head of the list.
--- Sorting is stable.
-prioritize :: (a -> Bool) -> [a] -> [a]
-prioritize p = uncurry (++) . partition p
-
---------------------------------------------------------------------------------
-
 -- | Like 'closeSock', except it swallows all 'IOError' exceptions.
 silentCloseSock :: MonadIO m => NS.Socket -> m ()
 silentCloseSock sock = liftIO $ do
-    E.catch (closeSock sock) (\(e :: IOError) -> return ())
-
+    E.catch (closeSock sock) (\(_ :: IOError) -> return ())
