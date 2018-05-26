@@ -1,5 +1,4 @@
-{ nixpkgs ? builtins.fetchTarball channel:nixos-18.03
-}:
+{ nixpkgs ? import ./nixpkgs.nix }:
 
 let
 pkgs = import nixpkgs {};
