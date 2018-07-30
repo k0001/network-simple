@@ -38,3 +38,4 @@ library
                    , bytestring   (>=0.9.2.1)
                    , transformers (>=0.2)
                    , exceptions   (>=0.6)
+                   , safe-exceptions

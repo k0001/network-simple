@@ -1,6 +1,10 @@
 # Version 0.4.2
 
-* Silence errors on socket shutdown.
+* Silence all synchronous exceptions on socket shutdown.
+
+* Better exception handling everywhere.
+
+* Added dependency on `safe-exceptions`.
 
 
 # Version 0.4.1

@@ -5,7 +5,7 @@
 -- | This module exports functions that abstract simple TCP 'NS.Socket'
 -- usage patterns.
 --
--- This module uses 'MonadIO' and 'C.MonadMask' extensively so that you can
+-- This module uses 'MonadIO' and 'Ex.MonadMask' extensively so that you can
 -- reuse these functions in monads other than 'IO'. However, if you don't care
 -- about any of that, just pretend you are using the 'IO' monad all the time
 -- and everything will work as expected.
@@ -58,9 +58,8 @@ module Network.Simple.TCP (
   , NS.SockAddr
   ) where
 
-import           Control.Concurrent             (ThreadId, forkIO, forkFinally)
-import qualified Control.Exception              as E
-import qualified Control.Monad.Catch            as C
+import           Control.Concurrent             (ThreadId, forkFinally)
+import qualified Control.Exception.Safe         as Ex
 import           Control.Monad
 import           Control.Monad.IO.Class         (MonadIO(liftIO))
 import qualified Data.ByteString                as BS
@@ -69,6 +68,7 @@ import           Data.List                      (transpose, partition)
 import qualified Network.Socket                 as NS
 import qualified Network.Socket.ByteString      as NSB
 import qualified Network.Socket.ByteString.Lazy as NSBL
+import qualified System.IO                      as IO
 import           System.Timeout                 (timeout)
 
 import Network.Simple.Internal
@@ -126,15 +126,15 @@ import Network.Simple.Internal
 -- If you prefer to acquire and close the socket yourself, then use
 -- 'connectSock' and 'closeSock'.
 connect
-  :: (MonadIO m, C.MonadMask m)
+  :: (MonadIO m, Ex.MonadMask m)
   => NS.HostName      -- ^Server hostname.
   -> NS.ServiceName   -- ^Server service port.
   -> ((NS.Socket, NS.SockAddr) -> m r)
                       -- ^Computation taking the communication socket
                       -- and the server address.
   -> m r
-connect host port = C.bracket (connectSock host port)
-                              (silentCloseSock . fst)
+connect host port = Ex.bracket (connectSock host port)
+                               (closeSock . fst)
 
 --------------------------------------------------------------------------------
 
@@ -173,8 +173,13 @@ serve
                       -- connection socket and remote end address.
   -> m ()
 serve hp port k = liftIO $ do
-    listen hp port $ \(lsock,_) -> do
-      forever $ acceptFork lsock k
+    listen hp port $ \(lsock, _) -> do
+       forever $ Ex.catch
+          (void (acceptFork lsock k))
+          (\se -> IO.hPutStrLn IO.stderr (x ++ show (se :: Ex.SomeException)))
+  where
+    x :: String
+    x = "Network.Simple.TCP.serve: Synchronous exception accepting connection: "
 
 --------------------------------------------------------------------------------
 
@@ -190,18 +195,18 @@ serve hp port k = liftIO $ do
 -- 2048 as the default size of the listening queue. The 'NS.NoDelay' and
 -- 'NS.ReuseAddr' options are set on the socket.
 listen
-  :: (MonadIO m, C.MonadMask m)
+  :: (MonadIO m, Ex.MonadMask m)
   => HostPreference   -- ^Preferred host to bind.
   -> NS.ServiceName   -- ^Service port to bind.
   -> ((NS.Socket, NS.SockAddr) -> m r)
                       -- ^Computation taking the listening socket and
                       -- the address it's bound to.
   -> m r
-listen hp port = C.bracket listen' (silentCloseSock . fst)
+listen hp port = Ex.bracket listen' (closeSock . fst)
   where
     listen' = do x@(bsock,_) <- bindSock hp port
                  liftIO $ NS.listen bsock $ max 2048 NS.maxListenQueue
-                 return x
+                 pure x
 
 --------------------------------------------------------------------------------
 
@@ -209,17 +214,18 @@ listen hp port = C.bracket listen' (silentCloseSock . fst)
 --
 -- The connection socket is closed when done or in case of exceptions.
 accept
-  :: (MonadIO m, C.MonadMask m)
+  :: (MonadIO m, Ex.MonadMask m)
   => NS.Socket        -- ^Listening and bound socket.
   -> ((NS.Socket, NS.SockAddr) -> m r)
                       -- ^Computation to run once an incoming
                       -- connection is accepted. Takes the connection socket
                       -- and remote end address.
   -> m r
-accept lsock k = do
-    (csock, addr) <- liftIO (NS.accept lsock)
-    let conn = (csock, ipv4mapped_to_ipv4 addr)
-    C.finally (k conn) (silentCloseSock csock)
+accept lsock k = Ex.mask $ \restore -> do
+  (csock, addr) <- restore (liftIO (NS.accept lsock))
+  Ex.onException
+     (restore (k (csock, ipv4mapped_to_ipv4 addr)))
+     (closeSock csock)
 {-# INLINABLE accept #-}
 
 -- | Accept a single incoming connection and use it in a different thread.
@@ -233,12 +239,14 @@ acceptFork
                       -- once an incoming connection is accepted. Takes the
                       -- connection socket and remote end address.
   -> m ThreadId
-acceptFork lsock k = liftIO $ do
-    (csock,addr) <- NS.accept lsock
-    let conn = (csock, ipv4mapped_to_ipv4 addr)
-    forkFinally (k conn)
-                (\ea -> do silentCloseSock csock
-                           either E.throwIO return ea)
+acceptFork lsock k = liftIO $ Ex.mask $ \restore -> do
+    (csock,addr) <- restore (NS.accept lsock)
+    Ex.onException
+       (forkFinally
+          (restore (k (csock, ipv4mapped_to_ipv4 addr)))
+          (\case Right () -> closeSock csock
+                 Left se -> Ex.finally (closeSock csock) (Ex.throwM se)))
+       (closeSock csock)
 {-# INLINABLE acceptFork #-}
 
 --------------------------------------------------------------------------------
@@ -266,11 +274,11 @@ connectSock host port = liftIO $ do
     tryAddrs = \case
       [] -> fail "connectSock: No addresses available"
       [x] -> useAddr x
-      (x:xs) -> E.catch (useAddr x) (\(_ :: IOError) -> tryAddrs xs)
+      (x:xs) -> Ex.catch (useAddr x) (\(_ :: IOError) -> tryAddrs xs)
     useAddr :: NS.AddrInfo -> IO (NS.Socket, NS.SockAddr)
     useAddr addr = do
        yx <- timeout 1000000 $ do -- 1 second
-          E.bracketOnError (newSocket addr) closeSock $ \sock -> do
+          Ex.bracketOnError (newSocket addr) closeSock $ \sock -> do
              let sockAddr = NS.addrAddress addr
              NS.connect sock sockAddr
              pure (sock, sockAddr)
@@ -305,23 +313,24 @@ bindSock hp port = liftIO $ do
     tryAddrs = \case
       [] -> fail "bindSock: No addresses available"
       [x] -> useAddr x
-      (x:xs) -> E.catch (useAddr x) (\(_ :: IOError) -> tryAddrs xs)
+      (x:xs) -> Ex.catch (useAddr x) (\(_ :: IOError) -> tryAddrs xs)
     useAddr :: NS.AddrInfo -> IO (NS.Socket, NS.SockAddr)
-    useAddr addr = E.bracketOnError (newSocket addr) closeSock $ \sock -> do
+    useAddr addr = Ex.bracketOnError (newSocket addr) closeSock $ \sock -> do
       let sockAddr = NS.addrAddress addr
       NS.setSocketOption sock NS.NoDelay 1
       NS.setSocketOption sock NS.ReuseAddr 1
       when (isIPv6addr addr) $ do
          NS.setSocketOption sock NS.IPv6Only (if hp == HostIPv6 then 1 else 0)
       NS.bind sock sockAddr
-      return (sock, sockAddr)
+      pure (sock, sockAddr)
 
--- | Close the 'NS.Socket'.
+-- | Shuts down and closes the 'NS.Socket', silently ignoring any synchronous
+-- exception that might happen.
 closeSock :: MonadIO m => NS.Socket -> m ()
 closeSock s = liftIO $ do
-  E.catch (NS.shutdown s NS.ShutdownBoth) (\(_ :: IOError) -> pure ())
-     `E.finally` (NS.close s)
-{-# INLINABLE closeSock #-}
+  Ex.catch (Ex.finally (NS.shutdown s NS.ShutdownBoth)
+                       (NS.close s))
+           (\(_ :: Ex.SomeException) -> pure ())
 
 --------------------------------------------------------------------------------
 -- Utils
@@ -329,13 +338,17 @@ closeSock s = liftIO $ do
 -- | Read up to a limited number of bytes from a socket.
 --
 -- Returns `Nothing` if the remote end closed the connection or end-of-input was
--- reached. The number of returned bytes might be less than the specified limit.
+-- reached. The number of returned bytes might be less than the specified limit,
+-- but it will never 'BS.null'.
 recv :: MonadIO m => NS.Socket -> Int -> m (Maybe BS.ByteString)
-recv sock nbytes = do
-     bs <- liftIO (NSB.recv sock nbytes)
-     if BS.null bs
-        then return Nothing
-        else return (Just bs)
+recv sock nbytes = liftIO $ do
+    NS.isReadable sock >>= \case
+       False -> pure Nothing
+       True  -> do
+          bs <- liftIO (NSB.recv sock nbytes)
+          if BS.null bs
+             then pure Nothing
+             else pure (Just bs)
 {-# INLINABLE recv #-}
 
 -- | Writes a 'BS.ByteString' to the socket.
@@ -365,8 +378,3 @@ newSocket :: NS.AddrInfo -> IO NS.Socket
 newSocket addr = NS.socket (NS.addrFamily addr)
                            (NS.addrSocketType addr)
                            (NS.addrProtocol addr)
-
--- | Like 'closeSock', except it swallows all 'IOError' exceptions.
-silentCloseSock :: MonadIO m => NS.Socket -> m ()
-silentCloseSock sock = liftIO $ do
-    E.catch (closeSock sock) (\(_ :: IOError) -> return ())
