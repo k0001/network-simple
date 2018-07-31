@@ -362,24 +362,27 @@ recv sock nbytes = liftIO $ do
 {-# INLINABLE recv #-}
 
 -- | Writes a 'BS.ByteString' to the socket.
+--
+-- Note: On POSIX, calling 'sendLazy' once is much more efficient than
+-- repeatedly calling 'send' on strict 'BS.ByteString's. Use @'sendLazy' sock .
+-- 'BSL.fromChunks'@ if you have more than one strict 'BS.ByteString' to send.
 send :: MonadIO m => NS.Socket -> BS.ByteString -> m ()
 send sock = \bs -> liftIO (NSB.sendAll sock bs)
 {-# INLINABLE send #-}
 
 -- | Writes a lazy 'BSL.ByteString' to the socket.
+--
+-- Note: This uses @writev(2)@ on POSIX.
 sendLazy :: MonadIO m => NS.Socket -> BSL.ByteString -> m ()
 {-# INLINABLE sendLazy #-}
-#if !MIN_VERSION_network(2,7,0) && defined(mingw32_HOST_OS)
-sendLazy sock = \lbs -> sendMany sock (BSL.toChunks lbs) -- see #13.
-#else
 sendLazy sock = \lbs -> liftIO (NSBL.sendAll sock lbs)
-#endif
 
 -- | Writes the given list of 'BS.ByteString's to the socket.
--- This is faster than sending them individually.
+--
+-- Note: This uses @writev(2)@ on POSIX.
 sendMany :: MonadIO m => NS.Socket -> [BS.ByteString] -> m ()
-sendMany sock = \bs -> liftIO (NSB.sendMany sock bs)
-{-# INLINABLE sendMany #-}
+sendMany sock = sendLazy sock . BSL.fromChunks
+{-# DEPRECATED sendMany "Use @'sendLazy' sock . 'BSL.fromChunks'@" #-}
 
 --------------------------------------------------------------------------------
 -- Misc

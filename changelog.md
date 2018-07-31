@@ -1,5 +1,7 @@
 # Version 0.4.2
 
+* Deprecate `sendMany` in favor of `sendLazy`.
+
 * Silence all synchronous exceptions on socket shutdown and close.
 
 * Better exception handling everywhere.
