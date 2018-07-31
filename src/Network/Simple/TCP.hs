@@ -355,13 +355,10 @@ closeSock s = liftIO $ do
 -- but it will never 'BS.null'.
 recv :: MonadIO m => NS.Socket -> Int -> m (Maybe BS.ByteString)
 recv sock nbytes = liftIO $ do
-    NS.isReadable sock >>= \case -- TODO: socket to handle check
-       False -> pure Nothing
-       True  -> do
-          bs <- liftIO (NSB.recv sock nbytes)
-          if BS.null bs
-             then pure Nothing
-             else pure (Just bs)
+  bs <- liftIO (NSB.recv sock nbytes)
+  if BS.null bs
+     then pure Nothing
+     else pure (Just bs)
 {-# INLINABLE recv #-}
 
 -- | Writes a 'BS.ByteString' to the socket.
