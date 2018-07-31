@@ -172,7 +172,7 @@ serve
   -> ((NS.Socket, NS.SockAddr) -> IO ())
   -- ^ Computation to run in a different thread once an incoming connection is
   -- accepted. Takes the connection socket and remote end address.
-  -> m ()
+  -> m a -- ^ This function never returns.
 serve hp port k = liftIO $ do
     listen hp port $ \(lsock, _) -> do
        forever $ Ex.catch

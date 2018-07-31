@@ -2,6 +2,8 @@
 
 * Deprecate `sendMany` in favor of `sendLazy`.
 
+* Generalize return type of `serve`.
+
 * Silence all synchronous exceptions on socket shutdown and close.
 
 * Better exception handling everywhere.
