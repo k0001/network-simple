@@ -1,10 +1,14 @@
 # Version 0.4.2
 
-* Silence all synchronous exceptions on socket shutdown.
+* Silence all synchronous exceptions on socket shutdown and close.
 
 * Better exception handling everywhere.
 
 * Added dependency on `safe-exceptions`.
+
+* Added `listenSock`.
+
+* Improved documentation.
 
 
 # Version 0.4.1
