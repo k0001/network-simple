@@ -161,9 +161,9 @@ connectSOCKS5
   -- will happen on the proxy side for security reasons, not locally.
   -> NS.ServiceName -- ^ Destination server service port name or number.
   -> ((NS.Socket, NS.SockAddr, NS.SockAddr) -> m r)
-  -- ^ Computation taking 'NS.Socket' connected to the SOCKS5 server, the
-  -- address of that SOCKS5 server, and the address of the destination server,
-  -- in that order.
+  -- ^ Computation taking 'NS.Socket' connected to the SOCKS5 server (through
+  -- which we can interact with the destination server), the address of that
+  -- SOCKS5 server, and the address of the destination server, in that order.
   -> m r
 connectSOCKS5 phn psn dhn dsn k =
   connect phn psn $ \(psock, paddr) -> do
@@ -384,7 +384,11 @@ closeSock s = liftIO $ do
 -- connection to the specified destination server through that proxy.
 connectSockSOCKS5
   :: MonadIO m
-  => NS.Socket -- ^ Socket connected to the SOCKS5 proxy server.
+  => NS.Socket
+  -- ^ Socket connected to the SOCKS5 proxy server.
+  --
+  -- After a successful use of 'connectSockSOCKS5', all traffic exchanged
+  -- through this socket will be between ourselves and the destination server.
   -> NS.HostName
   -- ^ Destination server hostname or IP address. We connect to this host
   -- /through/ the SOCKS5 proxy specified in the previous arguments.
