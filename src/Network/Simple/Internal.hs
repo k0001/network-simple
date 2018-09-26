@@ -13,13 +13,16 @@ module Network.Simple.Internal
   , isIPv6addr
   , prioritize
   , happyEyeballSort
+  , getServicePortNumber'
   ) where
 
-import           Data.Bits                     (shiftR, (.&.))
-import qualified Data.List                     as List
-import           Data.String                   (IsString (fromString))
-import           Data.Word                     (byteSwap32)
-import qualified Network.Socket as             NS
+import Data.Bits (shiftR, (.&.))
+import qualified Data.List as List
+import Data.String (IsString (fromString))
+import Data.Word (byteSwap16)
+import qualified Network.Socket as NS
+import qualified Network.BSD as NS (getServicePortNumber)
+import Text.Read (readMaybe)
 
 -- | Preferred host to bind.
 data HostPreference
@@ -75,3 +78,13 @@ isIPv6addr x = NS.addrFamily x == NS.AF_INET6
 -- Sorting is stable.
 prioritize :: (a -> Bool) -> [a] -> [a]
 prioritize p = uncurry (++) . List.partition p
+
+-- | Like 'NS.getServicePortNumber', but it will accept numeric values such as
+-- @\"80\"@ as input.
+getServicePortNumber' :: NS.ServiceName -> IO NS.PortNumber
+getServicePortNumber' sn = case readMaybe sn of
+  Just w16 -> pure (fromIntegral (byteSwap16 w16))
+  Nothing -> NS.getServicePortNumber sn
+    -- the @socks5@ library is broken and uses port numbers in the
+    -- wrong byte order. here we work around that.
+

@@ -1,3 +1,9 @@
+# Version 0.4.3
+
+* Added SOCKS5 proxy support using the `socks` library. See functions
+  `connectSOCKS5` and `connectSockSOCKS5`.
+
+
 # Version 0.4.2
 
 * Deprecate `sendMany` in favor of `sendLazy`.

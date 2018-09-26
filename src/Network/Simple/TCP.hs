@@ -17,6 +17,10 @@
 -- Some code in this file was adapted from the @network-conduit@ library by
 -- Michael Snoyman. Copyright (c) 2011. See its licensing terms (BSD3) at:
 --   https://github.com/snoyberg/conduit/blob/master/network-conduit/LICENSE
+--
+-- Some code in this file was adapted from the @socks@ library by
+-- Vincent Hanquez. Copyright (c) 2010-2011. See its licensing terms (BSD3) at:
+--   https://github.com/vincenthz/hs-socks/blob/master/LICENSE
 
 module Network.Simple.TCP (
   -- * Introduction to TCP networking
@@ -25,6 +29,7 @@ module Network.Simple.TCP (
   -- * Client side
   -- $client-side
     connect
+  , connectSOCKS5
 
   -- * Server side
   -- $server-side
@@ -45,6 +50,7 @@ module Network.Simple.TCP (
   , bindSock
   , listenSock
   , connectSock
+  , connectSockSOCKS5
   , closeSock
 
   -- * Note to Windows users
@@ -65,9 +71,13 @@ import qualified Control.Exception.Safe         as Ex
 import           Control.Monad
 import           Control.Monad.IO.Class         (MonadIO(liftIO))
 import qualified Data.ByteString                as BS
+import qualified Data.ByteString.Char8          as B8
 import qualified Data.ByteString.Lazy           as BSL
 import           Data.List                      (transpose, partition)
+import           Data.Word                      (byteSwap16)
 import qualified Network.Socket                 as NS
+import qualified Network.Socks5.Lowlevel        as NS5
+import qualified Network.Socks5.Types           as NS5
 import qualified Network.Socket.ByteString      as NSB
 import qualified Network.Socket.ByteString.Lazy as NSBL
 import qualified System.IO                      as IO
@@ -75,7 +85,7 @@ import           System.Timeout                 (timeout)
 
 import Network.Simple.Internal
   (HostPreference(..), hpHostName, isIPv4addr, isIPv6addr, ipv4mapped_to_ipv4,
-   prioritize, happyEyeballSort)
+   prioritize, happyEyeballSort, getServicePortNumber')
 
 --------------------------------------------------------------------------------
 -- $tcp-101
@@ -136,6 +146,29 @@ connect
   -- ^ Computation taking the communication socket and the server address.
   -> m r
 connect host port = Ex.bracket (connectSock host port) (closeSock . fst)
+
+-- | Like 'connect', but connects to the destination server through a SOCKS5
+-- proxy.
+connectSOCKS5
+  :: (MonadIO m, Ex.MonadMask m)
+  => NS.HostName -- ^ SOCKS5 proxy server hostname or IP address.
+  -> NS.ServiceName -- ^ SOCKS5 proxy server service port name or number.
+  -> NS.HostName
+  -- ^ Destination server hostname or IP address. We connect to this host
+  -- /through/ the SOCKS5 proxy specified in the previous arguments.
+  --
+  -- Note that if hostname resolution on this 'NS.HostName' is necessary, it
+  -- will happen on the proxy side for security reasons, not locally.
+  -> NS.ServiceName -- ^ Destination server service port name or number.
+  -> ((NS.Socket, NS.SockAddr, NS.SockAddr) -> m r)
+  -- ^ Computation taking 'NS.Socket' connected to the SOCKS5 server, the
+  -- address of that SOCKS5 server, and the address of the destination server,
+  -- in that order.
+  -> m r
+connectSOCKS5 phn psn dhn dsn k =
+  connect phn psn $ \(psock, paddr) -> do
+     daddr <- connectSockSOCKS5 psock dhn dsn
+     k (psock, paddr, daddr)
 
 --------------------------------------------------------------------------------
 
@@ -344,6 +377,41 @@ closeSock s = liftIO $ do
   Ex.catch (Ex.finally (NS.shutdown s NS.ShutdownBoth)
                        (NS.close s))
            (\(_ :: Ex.SomeException) -> pure ())
+
+--------------------------------------------------------------------------------
+
+-- | Given a 'NS.Socket' connected to a SOCKS5 proxy server, establish a
+-- connection to the specified destination server through that proxy.
+connectSockSOCKS5
+  :: MonadIO m
+  => NS.Socket -- ^ Socket connected to the SOCKS5 proxy server.
+  -> NS.HostName
+  -- ^ Destination server hostname or IP address. We connect to this host
+  -- /through/ the SOCKS5 proxy specified in the previous arguments.
+  --
+  -- Note that if hostname resolution on this 'NS.HostName' is necessary, it
+  -- will happen on the proxy side for security reasons, not locally.
+  -> NS.ServiceName -- ^ Destination server service port name or number.
+  -> m NS.SockAddr -- ^ Address of the destination server.
+connectSockSOCKS5 psock dhn dsn = liftIO $ do
+   dpn :: NS.PortNumber <- do
+     pn <- getServicePortNumber' dsn
+     -- The @socks5@ library seems to be broken and use port numbers
+     -- in the wrong byte order. Here we work around that.
+     pure (fromIntegral (byteSwap16 (fromInteger (toInteger pn))))
+   let dsa = NS5.SocksAddress (NS5.SocksAddrDomainName (B8.pack dhn)) dpn
+   NS5.establish psock [NS5.SocksMethodNone] >>= \case
+     NS5.SocksMethodNone -> do
+       NS5.rpc_ psock (NS5.Connect dsa) >>= \case
+         (NS5.SocksAddrIPV4 ha, p) -> pure (NS.SockAddrInet p ha)
+         (NS5.SocksAddrIPV6 ha, p) -> pure (NS.SockAddrInet6 p 0 ha 0)
+         _ -> err "Impossible reply from SOCKS5 server"
+     r -> err ("Unsupported reply from SOCKS5 server: " ++ show r)
+ where
+   err :: String -> IO a
+   err s = fail ("Network.Simple.TCP.connectSockSOCKS5: " ++ s)
+
+
 
 --------------------------------------------------------------------------------
 -- Utils
