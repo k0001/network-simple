@@ -319,7 +319,7 @@ connectSock host port = liftIO $ do
       (x:xs) -> Ex.catch (useAddr x) (\(_ :: IOError) -> tryAddrs xs)
     useAddr :: NS.AddrInfo -> IO (NS.Socket, NS.SockAddr)
     useAddr addr = do
-       yx <- timeout 1000000 $ do -- 1 second
+       yx <- timeout 3000000 $ do -- 3 seconds
           Ex.bracketOnError (newSocket addr) closeSock $ \sock -> do
              let sockAddr = NS.addrAddress addr
              NS.connect sock sockAddr

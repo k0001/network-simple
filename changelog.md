@@ -3,6 +3,8 @@
 * Added SOCKS5 proxy support using the `socks` library. See functions
   `connectSOCKS5` and `connectSockSOCKS5`.
 
+* Increased connection timeout.
+
 
 # Version 0.4.2
 
