@@ -5,6 +5,10 @@
 
 * Increased connection timeout.
 
+* Client side sockets now have `SO_KEEPALIVE` and `TCP_NODELAY` on by default.
+
+* Server side sockets now have `SO_KEEPALIVE` on by default.
+
 
 # Version 0.4.2
 

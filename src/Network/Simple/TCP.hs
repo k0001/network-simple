@@ -138,6 +138,8 @@ import Network.Simple.Internal
 --
 -- If you prefer to acquire and close the socket yourself, then use
 -- 'connectSock' and 'closeSock'.
+--
+-- Note: The 'NS.NoDelay' and 'NS.KeepAlive' options are set on the socket.
 connect
   :: (MonadIO m, Ex.MonadMask m)
   => NS.HostName -- ^ Server hostname or IP address.
@@ -224,8 +226,8 @@ serve hp port k = liftIO $ do
 -- If you prefer to acquire and close the socket yourself, then use 'bindSock'
 -- and 'closeSock', as well as 'listenSock' function.
 --
--- Note: The 'NS.NoDelay' and 'NS.ReuseAddr' options are set on the socket. The
--- maximum number of incoming queued connections is 2048.
+-- Note: The 'NS.NoDelay', 'NS.KeepAlive' and 'NS.ReuseAddr' options are set on
+-- the socket. The maximum number of incoming queued connections is 2048.
 listen
   :: (MonadIO m, Ex.MonadMask m)
   => HostPreference -- ^ Host to bind.
@@ -299,6 +301,8 @@ acceptFork lsock k = liftIO $ Ex.mask $ \restore -> do
 -- Prefer to use 'connect' if you will be using the socket within a limited
 -- scope and would like it to be closed immediately after its usage or in case
 -- of exceptions.
+--
+-- Note: The 'NS.NoDelay' and 'NS.KeepAlive' options are set on the socket.
 connectSock
   :: MonadIO m
   => NS.HostName -- ^ Server hostname or IP address.
@@ -322,6 +326,8 @@ connectSock host port = liftIO $ do
        yx <- timeout 3000000 $ do -- 3 seconds
           Ex.bracketOnError (newSocket addr) closeSock $ \sock -> do
              let sockAddr = NS.addrAddress addr
+             NS.setSocketOption sock NS.NoDelay 1
+             NS.setSocketOption sock NS.KeepAlive 1
              NS.connect sock sockAddr
              pure (sock, sockAddr)
        case yx of
@@ -337,7 +343,8 @@ connectSock host port = liftIO $ do
 -- within a limited scope, and would like it to be closed immediately after its
 -- usage or in case of exceptions.
 --
--- Note: The 'NS.NoDelay' and 'NS.ReuseAddr' options are set on the socket.
+-- Note: The 'NS.NoDelay', 'NS.KeepAlive' and 'NS.ReuseAddr' options are set on
+-- the socket.
 bindSock
   :: MonadIO m
   => HostPreference -- ^ Host to bind.
@@ -357,7 +364,7 @@ bindSock hp port = liftIO $ do
       , NS.addrSocketType = NS.Stream }
     tryAddrs :: [NS.AddrInfo] -> IO (NS.Socket, NS.SockAddr)
     tryAddrs = \case
-      [] -> fail "bindSock: No addresses available"
+      [] -> fail "Network.Simple.TCP.bindSock: No addresses available"
       [x] -> useAddr x
       (x:xs) -> Ex.catch (useAddr x) (\(_ :: IOError) -> tryAddrs xs)
     useAddr :: NS.AddrInfo -> IO (NS.Socket, NS.SockAddr)
@@ -365,6 +372,7 @@ bindSock hp port = liftIO $ do
       let sockAddr = NS.addrAddress addr
       NS.setSocketOption sock NS.NoDelay 1
       NS.setSocketOption sock NS.ReuseAddr 1
+      NS.setSocketOption sock NS.KeepAlive 1
       when (isIPv6addr addr) $ do
          NS.setSocketOption sock NS.IPv6Only (if hp == HostIPv6 then 1 else 0)
       NS.bind sock sockAddr
