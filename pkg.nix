@@ -3,7 +3,7 @@
 }:
 mkDerivation {
   pname = "network-simple";
-  version = "0.4.3";
+  version = "0.4.4";
   src = ./.;
   libraryHaskellDepends = [
     base bytestring network safe-exceptions socks transformers

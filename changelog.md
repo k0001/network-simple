@@ -1,3 +1,8 @@
+# Version 0.4.4
+
+* Compatibility with `socks-0.6`.
+
+
 # Version 0.4.3
 
 * Added SOCKS5 proxy support using the `socks` library. See functions

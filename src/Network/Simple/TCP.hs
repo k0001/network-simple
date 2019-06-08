@@ -412,7 +412,7 @@ connectSockSOCKS5 psock dhn dsn = liftIO $ do
      -- in the wrong byte order. Here we work around that.
      pure (fromIntegral (byteSwap16 (fromInteger (toInteger pn))))
    let dsa = NS5.SocksAddress (NS5.SocksAddrDomainName (B8.pack dhn)) dpn
-   NS5.establish psock [NS5.SocksMethodNone] >>= \case
+   ns5Establish psock [NS5.SocksMethodNone] >>= \case
      NS5.SocksMethodNone -> do
        NS5.rpc_ psock (NS5.Connect dsa) >>= \case
          (NS5.SocksAddrIPV4 ha, p) -> pure (NS.SockAddrInet p ha)
@@ -472,3 +472,9 @@ newSocket addr = NS.socket (NS.addrFamily addr)
                            (NS.addrSocketType addr)
                            (NS.addrProtocol addr)
 
+-- Wrapper around 'NS5.establish' for backwards compatibility.
+ns5Establish :: NS.Socket -> [NS5.SocksMethod] -> IO NS5.SocksMethod
+ns5Establish = NS5.establish
+#if MIN_VERSION_socks(0,6,0)
+    NS5.SocksVer5
+#endif

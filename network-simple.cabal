@@ -1,12 +1,12 @@
 name:                network-simple
-version:             0.4.3
+version:             0.4.4
 homepage:            https://github.com/k0001/network-simple
 bug-reports:         https://github.com/k0001/network-simple/issues
 license:             BSD3
 license-file:        LICENSE
 author:              Renzo Carbonara
 maintainer:          renλren.zone
-copyright:           Copyright (c) Renzo Carbonara 2013-2018
+copyright:           Copyright (c) Renzo Carbonara 2013-2019
 category:            Network
 build-type:          Simple
 cabal-version:       >=1.8

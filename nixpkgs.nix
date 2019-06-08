@@ -1,5 +1,5 @@
-# NixOS 18.03, July 30 2018
+# Nixos 19.03 may 5 2019
 builtins.fetchTarball {
-  url = "https://github.com/NixOS/nixpkgs/archive/6115f4777031924af1f91a08ed88cd8826fd649f.tar.gz";
-  sha256 = "0fcg12zh3i2ij4ijxmcd7qbvr0mmrng672ll1imwma6h3q9imirp";
+  url = "https://github.com/NixOS/nixpkgs/archive/87f146a41c463a64c93022b11cf19716b3a22037.tar.gz";
+  sha256 = "0rk8haf19plw6vyvq0am99rik0hrrysknjw0f2vs7985awngy3q2";
 }
