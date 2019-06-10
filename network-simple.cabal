@@ -34,8 +34,8 @@ library
   exposed-modules:   Network.Simple.TCP
   other-modules:     Network.Simple.Internal
   build-depends:     base         (>=4.7 && < 5)
-                   , network      (>=3)
-                   , network-bsd  (>=2.8)
+                   , network      (>=2.7)
+                   , network-bsd  (>=2.7)
                    , bytestring
                    , transformers
                    , safe-exceptions
