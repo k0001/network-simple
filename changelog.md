@@ -1,3 +1,12 @@
+# Version 0.4.5
+
+* Compatibility with `network-3.0`.
+
+* Bumped minimum `network` version to `2.7`.
+
+* Added dependency on `network-bsd >= 2.7`.
+
+
 # Version 0.4.4
 
 * Compatibility with `socks-0.6`.
