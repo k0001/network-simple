@@ -1,8 +1,8 @@
 name:                network-simple-tls
-version:             0.4
+version:             0.4.1
 synopsis:            Simple interface to TLS secured network sockets.
 description:         Simple interface to TLS secured network sockets.
-homepage:            https://github.com/k0001/network-simple
+homepage:            https://hackage.haskell.org/package/network-simple-tls
 bug-reports:         https://github.com/k0001/network-simple/issues
 license:             BSD3
 license-file:        LICENSE
@@ -16,7 +16,8 @@ extra-source-files:  README.md PEOPLE changelog.md
 
 source-repository head
     type: git
-    location: git://github.com/k0001/network-simple-tls.git
+    location: https://github.com/k0001/network-simple
+    subdir: network-simple-tls
 
 library
   hs-source-dirs:    src

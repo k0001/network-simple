@@ -1,3 +1,8 @@
+# Version 0.4.1
+
+* Fix compiler warnings.
+
+
 # Version 0.4
 
 * COMPILER ASSISTED BREAKING CHANGE: `ClientSettings` and `ServerSettings` are

@@ -560,7 +560,8 @@ useTlsThenCloseFork k conn@(ctx,_) = liftIO $ do
 -- Up to @16384@ decrypted bytes will be received at once.
 recv :: MonadIO m => T.Context -> m (Maybe B.ByteString)
 recv ctx = liftIO $ do
-    E.handle (\T.Error_EOF -> return Nothing)
+    E.handle (\case T.Error_EOF -> return Nothing
+                    e -> E.throwM e)
              (do bs <- T.recvData ctx
                  if B.null bs
                     then return Nothing -- I think this never happens
