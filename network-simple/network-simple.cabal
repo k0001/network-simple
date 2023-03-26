@@ -6,7 +6,7 @@ license:             BSD3
 license-file:        LICENSE
 author:              Renzo Carbonara
 maintainer:          renλren.zone
-copyright:           Copyright (c) Renzo Carbonara 2013-2019
+copyright:           Copyright (c) Renzo Carbonara 2013
 category:            Network
 build-type:          Simple
 cabal-version:       >=1.8
