@@ -1,17 +1,17 @@
+cabal-version: 2.4
 name: network-simple-ws
 version: 0.2
 synopsis: Simple interface to WebSockets.
 description: Simple interface to WebSockets.
 homepage: https://hackage.haskell.org/package/network-simple-ws
 bug-reports: https://github.com/k0001/network-simple/issues
-license: BSD3
+license: BSD-3-Clause
 license-file: LICENSE
 author: Renzo Carbonara
 maintainer: renλren.zone
 copyright: Copyright (c) Renzo Carbonara 2018
 category: Network
 build-type: Simple
-cabal-version: >=1.8
 extra-source-files: README.md changelog.md
 
 source-repository head
@@ -20,6 +20,7 @@ source-repository head
   subdir: network-simple-ws
 
 library
+  default-language:  Haskell2010
   hs-source-dirs: src
   ghc-options: -Wall -O2
   exposed-modules: Network.Simple.WS
