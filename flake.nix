@@ -1,5 +1,5 @@
 {
-  description = "Haskell 'network-simple' library";
+  description = "Haskell 'network-simple' libraries";
 
   inputs = {
     nixpkgs.url =
@@ -14,6 +14,9 @@
           packageOverrides = prev.lib.composeExtensions
             (prev.haskell.packageOverrides or (_: _: { })) (hself: hsuper: {
               network-simple = hself.callPackage ./network-simple { };
+              network-simple-tls = hself.callPackage ./network-simple-tls { };
+              network-simple-ws = hself.callPackage ./network-simple-ws { };
+              network-simple-wss = hself.callPackage ./network-simple-wss { };
             });
         };
       };
@@ -29,25 +32,62 @@
             constituents = [
               config.packages.network-simple__ghc8107
               config.packages.network-simple__ghc8107.doc
-              config.devShells.ghc8107
-
               config.packages.network-simple__ghc925
               config.packages.network-simple__ghc925.doc
-              config.devShells.ghc925
-
               config.packages.network-simple__ghc943
               config.packages.network-simple__ghc943.doc
+
+              config.packages.network-simple-tls__ghc8107
+              config.packages.network-simple-tls__ghc8107.doc
+              config.packages.network-simple-tls__ghc925
+              config.packages.network-simple-tls__ghc925.doc
+              config.packages.network-simple-tls__ghc943
+              config.packages.network-simple-tls__ghc943.doc
+
+              config.packages.network-simple-ws__ghc8107
+              config.packages.network-simple-ws__ghc8107.doc
+              config.packages.network-simple-ws__ghc925
+              config.packages.network-simple-ws__ghc925.doc
+              config.packages.network-simple-ws__ghc943
+              config.packages.network-simple-ws__ghc943.doc
+
+              config.packages.network-simple-wss__ghc8107
+              config.packages.network-simple-wss__ghc8107.doc
+              config.packages.network-simple-wss__ghc925
+              config.packages.network-simple-wss__ghc925.doc
+              config.packages.network-simple-wss__ghc943
+              config.packages.network-simple-wss__ghc943.doc
+
+              config.devShells.ghc8107
+              config.devShells.ghc925
               config.devShells.ghc943
             ];
           };
           network-simple__ghc8107 = pkgs.haskell.packages.ghc8107.network-simple;
           network-simple__ghc925 = pkgs.haskell.packages.ghc925.network-simple;
           network-simple__ghc943 = pkgs.haskell.packages.ghc943.network-simple;
+
+          network-simple-tls__ghc8107 = pkgs.haskell.packages.ghc8107.network-simple-tls;
+          network-simple-tls__ghc925 = pkgs.haskell.packages.ghc925.network-simple-tls;
+          network-simple-tls__ghc943 = pkgs.haskell.packages.ghc943.network-simple-tls;
+
+          network-simple-ws__ghc8107 = pkgs.haskell.packages.ghc8107.network-simple-ws;
+          network-simple-ws__ghc925 = pkgs.haskell.packages.ghc925.network-simple-ws;
+          network-simple-ws__ghc943 = pkgs.haskell.packages.ghc943.network-simple-ws;
+
+          network-simple-wss__ghc8107 = pkgs.haskell.packages.ghc8107.network-simple-wss;
+          network-simple-wss__ghc925 = pkgs.haskell.packages.ghc925.network-simple-wss;
+          network-simple-wss__ghc943 = pkgs.haskell.packages.ghc943.network-simple-wss;
         };
         devShells = let
           shellFor = hpkgs:
             hpkgs.shellFor {
-              packages = p: [ p.network-simple ];
+              packages = p: [
+                p.network-simple
+                p.network-simple-tls
+                p.network-simple-ws
+                p.network-simple-wss
+              ];
               withHoogle = true;
               nativeBuildInputs = [ pkgs.cabal-install pkgs.cabal2nix ];
             };

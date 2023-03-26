@@ -1,0 +1,33 @@
+name: network-simple-wss
+version: 0.2
+synopsis: Simple interface to TLS secured WebSockets.
+description: Simple interface to TLS secured WebSockets.
+homepage: https://github.com/k0001/network-simple
+bug-reports: https://github.com/k0001/network-simple/issues
+license: BSD3
+license-file: LICENSE
+author: Renzo Carbonara
+maintainer: renλren.zone
+copyright: Copyright (c) Renzo Carbonara 2018
+category: Network
+build-type: Simple
+cabal-version: >=1.8
+extra-source-files: README.md changelog.md
+
+source-repository head
+    type: git
+    location: https://github.com/k0001/network-simple-wss
+
+library
+  hs-source-dirs: src
+  exposed-modules: Network.Simple.WSS
+  ghc-options: -Wall -O2
+  build-depends:
+    async,
+    base >=4.7 && <5.0,
+    bytestring,
+    safe-exceptions,
+    network-simple-tls >=0.4,
+    network-simple-ws >=0.2,
+    websockets >=0.12.6
+

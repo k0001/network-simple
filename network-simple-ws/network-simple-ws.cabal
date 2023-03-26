@@ -1,0 +1,33 @@
+name: network-simple-ws
+version: 0.2
+synopsis: Simple interface to WebSockets.
+description: Simple interface to WebSockets.
+homepage: https://github.com/k0001/network-simple
+bug-reports: https://github.com/k0001/network-simple/issues
+license: BSD3
+license-file: LICENSE
+author: Renzo Carbonara
+maintainer: renλren.zone
+copyright: Copyright (c) Renzo Carbonara 2018
+category: Network
+build-type: Simple
+cabal-version: >=1.8
+extra-source-files: README.md changelog.md
+
+source-repository head
+  type: git
+  location: https://github.com/k0001/network-simple-ws
+
+library
+  hs-source-dirs: src
+  ghc-options: -Wall -O2
+  exposed-modules: Network.Simple.WS
+  build-depends:
+    async,
+    base >=4.7 && <5.0,
+    bytestring,
+    case-insensitive,
+    safe-exceptions,
+    network-simple >=0.4.3,
+    websockets
+
