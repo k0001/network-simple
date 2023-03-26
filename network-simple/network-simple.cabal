@@ -1,6 +1,6 @@
 name:                network-simple
 version:             0.4.5
-homepage:            https://github.com/k0001/network-simple
+homepage:            https://hackage.haskell.org/package/network-simple
 bug-reports:         https://github.com/k0001/network-simple/issues
 license:             BSD3
 license-file:        LICENSE
@@ -27,7 +27,8 @@ extra-source-files:
 
 source-repository head
     type: git
-    location: git://github.com/k0001/network-simple.git
+    location: https://github.com/k0001/network-simple
+    subdir: network-simple
 
 library
   hs-source-dirs:    src

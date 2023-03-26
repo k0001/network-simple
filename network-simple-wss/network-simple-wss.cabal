@@ -2,7 +2,7 @@ name: network-simple-wss
 version: 0.2
 synopsis: Simple interface to TLS secured WebSockets.
 description: Simple interface to TLS secured WebSockets.
-homepage: https://github.com/k0001/network-simple
+homepage: https://hackage.haskell.org/package/network-simple-wss
 bug-reports: https://github.com/k0001/network-simple/issues
 license: BSD3
 license-file: LICENSE
@@ -16,7 +16,8 @@ extra-source-files: README.md changelog.md
 
 source-repository head
     type: git
-    location: https://github.com/k0001/network-simple-wss
+    location: https://github.com/k0001/network-simple
+    subdir: network-simple-wss
 
 library
   hs-source-dirs: src

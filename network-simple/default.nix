@@ -9,7 +9,7 @@ mkDerivation {
     base bytestring network network-bsd safe-exceptions socks
     transformers
   ];
-  homepage = "https://github.com/k0001/network-simple";
+  homepage = "https://hackage.haskell.org/package/network-simple";
   description = "Simple network sockets usage patterns";
   license = lib.licenses.bsd3;
 }

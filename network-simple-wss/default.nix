@@ -9,7 +9,7 @@ mkDerivation {
     async base bytestring network-simple-tls network-simple-ws
     safe-exceptions websockets
   ];
-  homepage = "https://github.com/k0001/network-simple-wss";
+  homepage = "https://hackage.haskell.org/package/network-simple-wss";
   description = "Simple interface to TLS secured WebSockets";
   license = lib.licenses.bsd3;
 }

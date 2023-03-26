@@ -1,0 +1,10 @@
+profiling: True
+profiling-detail: all-functions
+optimization: True
+documentation: True
+tests: True
+packages:
+  network-simple/
+  network-simple-tls/
+  network-simple-ws/
+  network-simple-wss/
