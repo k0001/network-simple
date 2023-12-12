@@ -4,7 +4,7 @@
 mkDerivation {
   pname = "network-simple-wss";
   version = "0.2";
-  src = lib.sources.cleanSource ./.;
+  src = ./.;
   libraryHaskellDepends = [
     async base bytestring network-simple-tls network-simple-ws
     safe-exceptions websockets

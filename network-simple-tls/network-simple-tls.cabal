@@ -1,6 +1,6 @@
 cabal-version:       2.4
 name:                network-simple-tls
-version:             0.4.1
+version:             0.4.2
 synopsis:            Simple interface to TLS secured network sockets.
 description:         Simple interface to TLS secured network sockets.
 homepage:            https://hackage.haskell.org/package/network-simple-tls
@@ -29,12 +29,12 @@ library
                    , network
                    , network-simple >=0.4.3
                    , safe-exceptions
-                   , tls >=1.5
+                   , tls >=1.8
                    , tls-session-manager
                    , transformers
-                   , x509
-                   , x509-store
-                   , x509-system
-                   , x509-validation
+                   , crypton-x509
+                   , crypton-x509-store
+                   , crypton-x509-system
+                   , crypton-x509-validation
   ghc-options:      -Wall -O2
 

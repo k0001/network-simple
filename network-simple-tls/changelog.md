@@ -1,3 +1,13 @@
+# Version 0.4.2
+
+* Use `crypton-x509`, `crypton-x509-store`, `crypton-x509-system`,
+  `crypton-x509-validation`.
+
+* Require `tls>=1.8`
+
+* Fix compiler warnings.
+
+
 # Version 0.4.1
 
 * Fix compiler warnings.

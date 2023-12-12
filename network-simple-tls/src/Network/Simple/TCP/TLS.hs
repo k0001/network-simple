@@ -287,7 +287,9 @@ makeServerParams cred ycStore = def
                             ("Unacceptable client cert: " ++ show errs')))
     -- Ciphers prefered by the server take precedence.
     chooseCipher :: T.Version -> [T.Cipher] -> T.Cipher
-    chooseCipher _ cCiphs = head (intersect TE.ciphersuite_strong cCiphs)
+    chooseCipher _ cCiphs = case intersect TE.ciphersuite_strong cCiphs of
+                              c : _ -> c
+                              _ -> error "chooseCipher: no ciphers"
 
 -- | Obtain new default 'T.ServerParams' for a particular server 'T.Credential'.
 --
@@ -560,12 +562,10 @@ useTlsThenCloseFork k conn@(ctx,_) = liftIO $ do
 -- Up to @16384@ decrypted bytes will be received at once.
 recv :: MonadIO m => T.Context -> m (Maybe B.ByteString)
 recv ctx = liftIO $ do
-    E.handle (\case T.Error_EOF -> return Nothing
-                    e -> E.throwM e)
-             (do bs <- T.recvData ctx
-                 if B.null bs
-                    then return Nothing -- I think this never happens
-                    else return (Just bs))
+   bs <- T.recvData ctx
+   if B.null bs
+      then return Nothing
+      else return (Just bs)
 {-# INLINABLE recv #-}
 
 -- | Encrypts the given strict 'B.ByteString' and sends it through the
@@ -604,4 +604,3 @@ silentBye ctx = do
                   } | Errno ioe == ePIPE
           -> return ()
         _ -> E.throwIO e
-
